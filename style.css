@@ -184,7 +184,7 @@ body::after {
 }
 
 .music-toggle-button {
-    position: absolute;
+    position: fixed;
     top: 20px;
     left: 20px;
     background: rgba(45, 69, 99, 0.9);
@@ -192,7 +192,7 @@ body::after {
     border: 3px solid #6dd5ed;
     padding: 12px 15px;
     font-size: 20px;
-    z-index: 100;
+    z-index: 10001;
     box-shadow: 0 0 10px rgba(109, 213, 237, 0.4);
     min-width: 55px;
     text-align: center;
@@ -263,7 +263,11 @@ body::after {
 }
 
 .customization-content {
-    background: linear-gradient(135deg, #3d5a6f 0%, #4a6b82 100%);
+    background: linear-gradient(135deg, rgba(61, 90, 111, 0.5) 0%, rgba(74, 107, 130, 0.5) 100%),
+                url('decorative-border.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     border: none;
     border-radius: 0;
     padding: 40px;
@@ -419,7 +423,11 @@ body::after {
 }
 
 .name-input-content {
-    background: linear-gradient(135deg, #3d5a6f 0%, #4a6b82 100%);
+    background: linear-gradient(135deg, rgba(61, 90, 111, 0.5) 0%, rgba(74, 107, 130, 0.5) 100%),
+                url('decorative-border.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     width: 100%;
     height: 100%;
     display: flex;
@@ -700,5 +708,143 @@ body::after {
     text-align: center;
     margin: 10px 20px;
     line-height: 1.6;
+}
+
+/* Admin Panel */
+.admin-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: rgba(29, 53, 87, 0.9);
+    border: 3px solid #6dd5ed;
+    color: #6dd5ed;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 10000;
+    border-radius: 8px;
+    font-family: Arial, sans-serif;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.admin-toggle:hover {
+    background: rgba(109, 213, 237, 0.2);
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(109, 213, 237, 0.5);
+}
+
+.admin-panel {
+    position: fixed;
+    top: 0;
+    right: -350px;
+    width: 350px;
+    height: 100vh;
+    background: rgba(29, 53, 87, 0.98);
+    border-left: 3px solid #6dd5ed;
+    z-index: 9999;
+    transition: right 0.3s ease;
+    overflow-y: auto;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+}
+
+.admin-panel.open {
+    right: 0;
+}
+
+.admin-panel.hidden {
+    display: block;
+}
+
+.admin-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 2px solid #6dd5ed;
+}
+
+.admin-panel-header h3 {
+    font-size: 14px;
+    color: #6dd5ed;
+    font-family: 'Press Start 2P', cursive;
+    margin: 0;
+}
+
+.admin-close {
+    background: transparent;
+    border: none;
+    color: #f87171;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px 10px;
+    transition: all 0.2s ease;
+}
+
+.admin-close:hover {
+    color: #ff4444;
+    transform: scale(1.2);
+}
+
+.admin-panel-content {
+    padding: 20px;
+}
+
+.admin-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(109, 213, 237, 0.3);
+}
+
+.admin-section:last-child {
+    border-bottom: none;
+}
+
+.admin-section h4 {
+    font-size: 10px;
+    color: #ffd700;
+    font-family: 'Press Start 2P', cursive;
+    margin-bottom: 15px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.admin-button {
+    width: 100%;
+    margin-bottom: 10px;
+    font-size: 10px;
+    padding: 12px;
+    background: rgba(109, 213, 237, 0.2);
+    border: 2px solid #6dd5ed;
+    color: #6dd5ed;
+}
+
+.admin-button:hover {
+    background: rgba(109, 213, 237, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(109, 213, 237, 0.3);
+}
+
+.admin-button:active {
+    transform: translateY(0);
+}
+
+/* Custom scrollbar for admin panel */
+.admin-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+.admin-panel::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.admin-panel::-webkit-scrollbar-thumb {
+    background: #6dd5ed;
+    border-radius: 4px;
+}
+
+.admin-panel::-webkit-scrollbar-thumb:hover {
+    background: #5bc5dd;
 }
 

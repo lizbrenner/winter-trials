@@ -4,7 +4,7 @@ A retro-style 8-bit/16-bit browser game inspired by classic Zelda-like adventure
 
 ## 🎮 Game Overview
 
-Join Hippo on an epic quest through five unique winter trials! Guided by a mystical Winter Spirit, you must complete each challenge to earn the legendary Runes of Winter and unlock the ancient Winter Gate.
+Join Frostwaddle on an epic quest through five unique winter trials to find his companion! Guided by a mystical Winter Spirit, you must complete each challenge to earn the legendary Runes of Winter and unlock the ancient Winter Gate where his companion is being held captive.
 
 ## ✨ Features
 

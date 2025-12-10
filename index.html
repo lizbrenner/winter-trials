@@ -14,7 +14,7 @@
         </div>
         <div id="customization-screen" class="customization-screen hidden">
             <div class="customization-content">
-                <h2 class="customization-title">Choose your sprite</h2>
+                <h2 class="customization-title">Choose your traveler</h2>
                 
                 <div class="customization-layout">
                     <!-- Left side - Options in 3x3 grid -->
@@ -105,6 +105,41 @@
                 <input type="text" id="password-input" class="password-input" maxlength="5" autocomplete="off">
                 <button id="submit-password" class="pixel-button">Unlock Gate</button>
                 <p id="gate-message" class="gate-message"></p>
+            </div>
+        </div>
+        <!-- Admin Panel -->
+        <button id="admin-toggle" class="admin-toggle">☰</button>
+        <div id="admin-panel" class="admin-panel hidden">
+            <div class="admin-panel-header">
+                <h3>Admin Panel</h3>
+                <button id="admin-close" class="admin-close">✕</button>
+            </div>
+            <div class="admin-panel-content">
+                <div class="admin-section">
+                    <h4>Level 1 - Watermelon Wasteland</h4>
+                    <button class="admin-button pixel-button" data-action="level1-start">Start Level 1</button>
+                    <button class="admin-button pixel-button" data-action="level1-end">End Level 1 (Rune)</button>
+                </div>
+                <div class="admin-section">
+                    <h4>Level 2 - Orchard of Oddities</h4>
+                    <button class="admin-button pixel-button" data-action="level2-start">Start Level 2</button>
+                    <button class="admin-button pixel-button" data-action="level2-end">End Level 2 (Rune)</button>
+                </div>
+                <div class="admin-section">
+                    <h4>Level 3 - Mirror Meadow</h4>
+                    <button class="admin-button pixel-button" data-action="level3-start">Start Level 3</button>
+                    <button class="admin-button pixel-button" data-action="level3-end">End Level 3 (Rune)</button>
+                </div>
+                <div class="admin-section">
+                    <h4>Level 4 - Cipher Stones</h4>
+                    <button class="admin-button pixel-button" data-action="level4-start">Start Level 4</button>
+                    <button class="admin-button pixel-button" data-action="level4-end">End Level 4 (Rune)</button>
+                </div>
+                <div class="admin-section">
+                    <h4>Level 5 - Sky Bridge</h4>
+                    <button class="admin-button pixel-button" data-action="level5-start">Start Level 5</button>
+                    <button class="admin-button pixel-button" data-action="level5-end">End Level 5 (Rune)</button>
+                </div>
             </div>
         </div>
     </div>

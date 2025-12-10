@@ -22,15 +22,97 @@ hippoHeroImage.onload = () => {
     hippoHeroLoaded = true;
 };
 const winterBackgroundImage = new Image();
-winterBackgroundImage.src = 'winter-background.png';
+winterBackgroundImage.src = 'home-background.png';
 let winterBackgroundLoaded = false;
 winterBackgroundImage.onload = () => {
     winterBackgroundLoaded = true;
 };
+const watermelonWastelandImage = new Image();
+watermelonWastelandImage.src = 'watermelon-wasteland-background.png';
+let watermelonWastelandLoaded = false;
+watermelonWastelandImage.onload = () => {
+    watermelonWastelandLoaded = true;
+};
+// Load slingshot and watermelon images for level 1
+const slingshotImage = new Image();
+slingshotImage.src = 'slingshot.png';
+let slingshotLoaded = false;
+slingshotImage.onload = () => {
+    slingshotLoaded = true;
+};
+const slingshotWatermelonImage = new Image();
+slingshotWatermelonImage.src = 'slingshot-watermelon.png';
+let slingshotWatermelonLoaded = false;
+slingshotWatermelonImage.onload = () => {
+    slingshotWatermelonLoaded = true;
+};
+const hippoMouthOpenImage = new Image();
+hippoMouthOpenImage.src = 'hippo-mouth-open.png';
+let hippoMouthOpenLoaded = false;
+hippoMouthOpenImage.onload = () => {
+    hippoMouthOpenLoaded = true;
+};
+const hippoMouthClosedImage = new Image();
+hippoMouthClosedImage.src = 'hippo-mouth-closed.png';
+let hippoMouthClosedLoaded = false;
+hippoMouthClosedImage.onload = () => {
+    hippoMouthClosedLoaded = true;
+};
+const watermelonImage = new Image();
+watermelonImage.src = 'watermelon.png';
+let watermelonLoaded = false;
+watermelonImage.onload = () => {
+    watermelonLoaded = true;
+};
+const watermelonBrokenImage = new Image();
+watermelonBrokenImage.src = 'watermelon-broken.png';
+let watermelonBrokenLoaded = false;
+watermelonBrokenImage.onload = () => {
+    watermelonBrokenLoaded = true;
+};
+// Load rune images for level completions
+const runeOImage = new Image();
+runeOImage.src = 'rune-o.png';
+let runeOLoaded = false;
+runeOImage.onload = () => {
+    runeOLoaded = true;
+};
+const runeGImage = new Image();
+runeGImage.src = 'rune-g.png';
+let runeGLoaded = false;
+runeGImage.onload = () => {
+    runeGLoaded = true;
+};
+const runeMImage = new Image();
+runeMImage.src = 'rune-m.png';
+let runeMLoaded = false;
+runeMImage.onload = () => {
+    runeMLoaded = true;
+};
+const runeNImage = new Image();
+runeNImage.src = 'rune-n.png';
+let runeNLoaded = false;
+runeNImage.onload = () => {
+    runeNLoaded = true;
+};
+const runeAImage = new Image();
+runeAImage.src = 'rune-a.png';
+let runeALoaded = false;
+runeAImage.onload = () => {
+    runeALoaded = true;
+};
+// Load rune background image for all rune displays
+const runeBackgroundImage = new Image();
+runeBackgroundImage.src = 'rune-background.png';
+let runeBackgroundLoaded = false;
+runeBackgroundImage.onload = () => {
+    runeBackgroundLoaded = true;
+};
 // Load and setup audio
-const backgroundMusic = new Audio('background-music.mp3');
+const backgroundMusic = new Audio('intro-background-music.mp3');
 backgroundMusic.loop = true;
 backgroundMusic.volume = 0.4; // 40% volume
+backgroundMusic.preload = 'auto'; // Preload the audio
 let isMuted = false;
 function startBackgroundMusic() {
     backgroundMusic.play().catch(error => {
@@ -126,13 +208,12 @@ function drawTitleScreen() {
         ctx.fillStyle = '#4a7ba7';
         ctx.fillRect(0, 0, 800, 600);
     }
-    // Title - styled like the reference image with green text and dark shadow
-    // Split into two lines and positioned at top
-    ctx.font = 'bold 32px "Press Start 2P"';
+    // Title - yellow text on one line
+    ctx.font = 'bold 24px "Press Start 2P"';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    const titleLine1 = '5 Runes of the';
-    const titleLine2 = 'Winter Trials';
+    const title = '5 Runes of the Winter Trials';
+    const titleY = 40;
     // Dark shadow/outline
     ctx.fillStyle = '#000000';
     const shadowOffsets = [
@@ -141,61 +222,134 @@ function drawTitleScreen() {
         { x: -3, y: 3 }, { x: 0, y: 3 }, { x: 3, y: 3 }
     ];
     shadowOffsets.forEach(offset => {
-        ctx.fillText(titleLine1, 400 + offset.x, 60 + offset.y);
-        ctx.fillText(titleLine2, 400 + offset.x, 105 + offset.y);
+        ctx.fillText(title, 400 + offset.x, titleY + offset.y);
     });
-    // Green text with lighter green gradient effect
-    const textGradient = ctx.createLinearGradient(0, 60, 0, 140);
-    textGradient.addColorStop(0, '#7cf07c');
-    textGradient.addColorStop(1, '#4ade80');
-    ctx.fillStyle = textGradient;
-    ctx.fillText(titleLine1, 400, 60);
-    ctx.fillText(titleLine2, 400, 105);
-    // Subtitle text - black color
+    // Light blue text
+    ctx.fillStyle = '#6dd5ed';
+    ctx.fillText(title, 400, titleY);
+    // Subtitle text - white with black stroke
     ctx.font = '13px "Press Start 2P"';
     ctx.textAlign = 'center';
-    ctx.fillStyle = '#000000';
     const subtitleLines = [
-        'Brave the icy realms, solve ancient',
-        'trials, and collect five magical runes',
+        'Brave the icy realms to solve ancient',
+        'trials and collect five magical runes',
         'said to unlock winter\'s greatest treasures'
     ];
-    let yPos = 170;
+    let yPos = 90;
     subtitleLines.forEach(line => {
+        // Black stroke/outline
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 4;
+        ctx.strokeText(line, 400, yPos);
+        // White fill
+        ctx.fillStyle = '#ffffff';
         ctx.fillText(line, 400, yPos);
         yPos += 22;
     });
 }
 // Dialogue Screen Background
+let currentDialogueBackground = 'intro';
+let showRuneDisplay = false; // false or level number (0-4) to show rune
 function drawDialogueScreen() {
-    // Draw hippo hero image filling entire canvas
-    if (hippoHeroLoaded) {
-        // Fill the entire canvas with the image
-        ctx.imageSmoothingEnabled = false;
-        // Calculate scaling to fill canvas while maintaining aspect ratio
-        const canvasAspect = canvas.width / canvas.height;
-        const imageAspect = hippoHeroImage.width / hippoHeroImage.height;
-        let drawWidth, drawHeight, offsetX, offsetY;
-        if (imageAspect > canvasAspect) {
-            // Image is wider - fit to height
-            drawHeight = canvas.height;
-            drawWidth = hippoHeroImage.width * (canvas.height / hippoHeroImage.height);
-            offsetX = (canvas.width - drawWidth) / 2;
-            offsetY = 0;
-        }
-        else {
-            // Image is taller - fit to width
-            drawWidth = canvas.width;
-            drawHeight = hippoHeroImage.height * (canvas.width / hippoHeroImage.width);
-            offsetX = 0;
-            offsetY = (canvas.height - drawHeight) / 2;
-        }
-        ctx.drawImage(hippoHeroImage, offsetX, offsetY, drawWidth, drawHeight);
+    ctx.imageSmoothingEnabled = false;
+    // Choose background based on current dialogue context
+    let backgroundImage;
+    let imageLoaded;
+    
+    // If showing rune display, use rune background for all levels
+    if (showRuneDisplay !== false && runeBackgroundLoaded) {
+        backgroundImage = runeBackgroundImage;
+        imageLoaded = runeBackgroundLoaded;
+    }
+    else if (currentDialogueBackground === 'level1' && watermelonWastelandLoaded) {
+        backgroundImage = watermelonWastelandImage;
+        imageLoaded = watermelonWastelandLoaded;
+    }
+    else if (hippoHeroLoaded) {
+        backgroundImage = hippoHeroImage;
+        imageLoaded = hippoHeroLoaded;
     }
     else {
         // Fallback background while image loads
         ctx.fillStyle = '#2d4563';
         ctx.fillRect(0, 0, 800, 600);
+        return;
+    }
+    // Fill the entire canvas with the selected image
+    const canvasAspect = canvas.width / canvas.height;
+    const imageAspect = backgroundImage.width / backgroundImage.height;
+    let drawWidth, drawHeight, offsetX, offsetY;
+    if (imageAspect > canvasAspect) {
+        // Image is wider - fit to height
+        drawHeight = canvas.height;
+        drawWidth = backgroundImage.width * (canvas.height / backgroundImage.height);
+        offsetX = (canvas.width - drawWidth) / 2;
+        offsetY = 0;
+    }
+    else {
+        // Image is taller - fit to width
+        drawWidth = canvas.width;
+        drawHeight = backgroundImage.height * (canvas.width / backgroundImage.width);
+        offsetX = 0;
+        offsetY = (canvas.height - drawHeight) / 2;
+    }
+    ctx.drawImage(backgroundImage, offsetX, offsetY, drawWidth, drawHeight);
+    
+    // If showing rune display, draw the appropriate rune image prominently in center
+    if (showRuneDisplay !== false) {
+        // Determine which rune image to use based on level
+        let currentRuneImage = null;
+        let currentRuneLoaded = false;
+        
+        switch(showRuneDisplay) {
+            case 0: // Level 1 - Watermelon Wasteland
+                currentRuneImage = runeOImage;
+                currentRuneLoaded = runeOLoaded;
+                break;
+            case 1: // Level 2 - Orchard of Oddities
+                currentRuneImage = runeGImage;
+                currentRuneLoaded = runeGLoaded;
+                break;
+            case 2: // Level 3 - Mirror Meadow
+                currentRuneImage = runeMImage;
+                currentRuneLoaded = runeMLoaded;
+                break;
+            case 3: // Level 4 - Cipher Stones
+                currentRuneImage = runeNImage;
+                currentRuneLoaded = runeNLoaded;
+                break;
+            case 4: // Level 5 - Sky Bridge
+                currentRuneImage = runeAImage;
+                currentRuneLoaded = runeALoaded;
+                break;
+        }
+        
+        if (currentRuneImage && currentRuneLoaded) {
+            // Make the rune large and prominent like in the example
+            // Dialogue box is about 200px at bottom, so we have ~400px of space
+            const availableHeight = 400;
+            const maxRuneSize = 350;
+            
+            // Calculate scaled dimensions while maintaining aspect ratio
+            const runeAspect = currentRuneImage.width / currentRuneImage.height;
+            let runeWidth, runeHeight;
+            
+            if (runeAspect > 1) {
+                // Wider than tall
+                runeWidth = Math.min(maxRuneSize, currentRuneImage.width);
+                runeHeight = runeWidth / runeAspect;
+            } else {
+                // Taller than wide or square
+                runeHeight = Math.min(maxRuneSize, currentRuneImage.height);
+                runeWidth = runeHeight * runeAspect;
+            }
+            
+            // Center the rune both horizontally and vertically in the available space above dialogue
+            const runeX = (canvas.width - runeWidth) / 2;
+            const runeY = (availableHeight - runeHeight) / 2 + 50; // +50 to push down slightly from top
+            
+            ctx.drawImage(currentRuneImage, runeX, runeY, runeWidth, runeHeight);
+        }
     }
 }
 // Dialogue system
@@ -240,11 +394,16 @@ function updateRuneDisplay() {
 function completeLevel() {
     gameState.levelComplete = true;
     awardRune();
+    
+    // Show the appropriate rune display for each level (0-4)
+    showRuneDisplay = gameState.currentLevel;
+    
     const levelMessages = [
         "Well done, brave traveler! You have earned a Rune of Winter.",
         "The ancient power flows through you. Your journey continues..."
     ];
     showDialogue(levelMessages, () => {
+        showRuneDisplay = false; // Reset the rune display flag
         gameState.currentLevel++;
         gameState.levelComplete = false;
         if (gameState.currentLevel >= 5) {
@@ -301,78 +460,205 @@ function showFinalGate() {
 // ===================
 class PaperWastelandLevel {
     constructor() {
-        this.hippo = { x: 100, y: 500, width: 40, height: 40 };
-        this.hoop = { x: 650, y: 200, width: 80, height: 80 };
-        this.paperBalls = [];
+        this.slingshot = { x: 360, y: 520, width: 80, height: 80 };
+        this.hippoTarget = { 
+            x: 200, 
+            y: 280, 
+            width: 100, 
+            height: 100, 
+            vx: 0.8,
+            mouthOpen: true,
+            messageTimer: 0,
+            message: ''
+        };
+        this.watermelons = [];
+        // Create 5 watermelons in bottom left corner
+        for (let i = 0; i < 5; i++) {
+            this.watermelons.push({
+                x: 50 + i * 50,
+                y: 550,
+                width: 40,
+                height: 40,
+                available: true
+            });
+        }
+        this.loadedWatermelon = false;
         this.power = 0;
         this.charging = false;
         this.score = 0;
-        this.targetScore = 3;
+        this.targetScore = 5;
         this.angle = -45;
-        canvas.addEventListener('mousedown', this.startCharge.bind(this));
-        canvas.addEventListener('mouseup', this.shoot.bind(this));
-        canvas.addEventListener('mousemove', this.updateAngle.bind(this));
+        this.projectiles = [];
+        this.brokenWatermelons = [];
+        
+        // Bind event handlers
+        this.mouseDownHandler = this.handleMouseDown.bind(this);
+        this.mouseUpHandler = this.handleMouseUp.bind(this);
+        this.mouseMoveHandler = this.handleMouseMove.bind(this);
+        
+        canvas.addEventListener('mousedown', this.mouseDownHandler);
+        canvas.addEventListener('mouseup', this.mouseUpHandler);
+        canvas.addEventListener('mousemove', this.mouseMoveHandler);
     }
-    startCharge() {
-        if (gameState.gamePhase === 'playing') {
-            this.charging = true;
-        }
-    }
-    updateAngle(e) {
-        if (gameState.gamePhase !== 'playing')
-            return;
+    
+    handleMouseDown(e) {
+        if (gameState.gamePhase !== 'playing') return;
+        
         const rect = canvas.getBoundingClientRect();
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
-        const dx = mouseX - (this.hippo.x + this.hippo.width / 2);
-        const dy = mouseY - (this.hippo.y + this.hippo.height / 2);
-        this.angle = Math.atan2(dy, dx) * 180 / Math.PI;
+        
+        // Check if clicking on a watermelon
+        if (!this.loadedWatermelon) {
+            for (let watermelon of this.watermelons) {
+                if (watermelon.available &&
+                    mouseX > watermelon.x && mouseX < watermelon.x + watermelon.width &&
+                    mouseY > watermelon.y && mouseY < watermelon.y + watermelon.height) {
+                    watermelon.available = false;
+                    this.loadedWatermelon = true;
+                    return;
+                }
+            }
+        }
+        
+        // If watermelon is loaded, start charging
+        if (this.loadedWatermelon) {
+            this.charging = true;
+        }
     }
-    shoot() {
-        if (this.charging && gameState.gamePhase === 'playing') {
+    
+    handleMouseUp() {
+        if (this.charging && this.loadedWatermelon && gameState.gamePhase === 'playing') {
             const speed = this.power * 0.15;
             const angleRad = this.angle * Math.PI / 180;
-            this.paperBalls.push({
-                x: this.hippo.x + this.hippo.width / 2,
-                y: this.hippo.y + this.hippo.height / 2,
+            this.projectiles.push({
+                x: this.slingshot.x + this.slingshot.width / 2,
+                y: this.slingshot.y + 20,
                 vx: Math.cos(angleRad) * speed,
                 vy: Math.sin(angleRad) * speed,
-                radius: 10
+                radius: 15
             });
             this.charging = false;
             this.power = 0;
+            this.loadedWatermelon = false;
         }
     }
-    update() {
-        if (this.charging) {
-            this.power = Math.min(this.power + 3, 100);
+    
+    handleMouseMove(e) {
+        if (gameState.gamePhase !== 'playing') return;
+        
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        
+        if (this.loadedWatermelon) {
+            const dx = mouseX - (this.slingshot.x + this.slingshot.width / 2);
+            const dy = mouseY - (this.slingshot.y + 20);
+            this.angle = Math.atan2(dy, dx) * 180 / Math.PI;
         }
-        // Update paper balls
-        for (let i = this.paperBalls.length - 1; i >= 0; i--) {
-            const ball = this.paperBalls[i];
-            ball.x += ball.vx;
-            ball.y += ball.vy;
-            ball.vy += 0.3; // gravity
-            // Check if in hoop
-            if (ball.x > this.hoop.x && ball.x < this.hoop.x + this.hoop.width &&
-                ball.y > this.hoop.y && ball.y < this.hoop.y + this.hoop.height) {
+    }
+    
+    update() {
+        // Update charging power
+        if (this.charging) {
+            this.power = Math.min(this.power + 2, 100);
+        }
+        
+        // Move hippo target back and forth
+        this.hippoTarget.x += this.hippoTarget.vx;
+        if (this.hippoTarget.x <= 150 || this.hippoTarget.x >= 550) {
+            this.hippoTarget.vx *= -1;
+        }
+        
+        // Update message timer
+        if (this.hippoTarget.messageTimer > 0) {
+            this.hippoTarget.messageTimer--;
+            if (this.hippoTarget.messageTimer === 0) {
+                this.hippoTarget.message = '';
+                this.hippoTarget.mouthOpen = true;
+            }
+        }
+        
+        // Check if we need to replenish watermelons
+        const availableWatermelons = this.watermelons.filter(w => w.available).length;
+        const projectilesInFlight = this.projectiles.length;
+        
+        // If no watermelons available, none loaded, no projectiles in flight, and haven't won yet
+        if (availableWatermelons === 0 && !this.loadedWatermelon && projectilesInFlight === 0 && this.score < this.targetScore) {
+            // Replenish all watermelons
+            this.watermelons.forEach(w => w.available = true);
+        }
+        
+        // Update projectiles
+        for (let i = this.projectiles.length - 1; i >= 0; i--) {
+            const proj = this.projectiles[i];
+            proj.x += proj.vx;
+            proj.y += proj.vy;
+            proj.vy += 0.4; // gravity
+            
+            // Check collision with hippo
+            if (this.hippoTarget.mouthOpen &&
+                proj.x > this.hippoTarget.x && 
+                proj.x < this.hippoTarget.x + this.hippoTarget.width &&
+                proj.y > this.hippoTarget.y && 
+                proj.y < this.hippoTarget.y + this.hippoTarget.height) {
+                // Hit!
                 this.score++;
-                this.paperBalls.splice(i, 1);
+                this.hippoTarget.mouthOpen = false;
+                this.hippoTarget.message = 'Yum, that was delicious!';
+                this.hippoTarget.messageTimer = 180; // Show message for 3 seconds
+                this.projectiles.splice(i, 1);
+                
                 if (this.score >= this.targetScore) {
                     this.cleanup();
                     completeLevel();
                 }
+                continue;
+            }
+            
+            // Check if hit ground
+            if (proj.y >= 580) {
+                this.brokenWatermelons.push({ x: proj.x, y: 580 });
+                if (this.hippoTarget.messageTimer === 0) {
+                    this.hippoTarget.message = 'Not quite, try again!';
+                    this.hippoTarget.messageTimer = 150; // Show message for 2.5 seconds
+                }
+                this.projectiles.splice(i, 1);
             }
             // Remove if off screen
-            else if (ball.x < 0 || ball.x > 800 || ball.y > 600) {
-                this.paperBalls.splice(i, 1);
+            else if (proj.x < 0 || proj.x > 800 || proj.y > 600) {
+                this.projectiles.splice(i, 1);
             }
         }
     }
+    
     draw() {
-        // Clear
-        ctx.fillStyle = '#e8f4f8';
-        ctx.fillRect(0, 0, 800, 600);
+        // Draw watermelon wasteland background
+        if (watermelonWastelandLoaded) {
+            ctx.imageSmoothingEnabled = false;
+            const canvasAspect = canvas.width / canvas.height;
+            const imageAspect = watermelonWastelandImage.width / watermelonWastelandImage.height;
+            let drawWidth, drawHeight, offsetX, offsetY;
+            if (imageAspect > canvasAspect) {
+                drawHeight = canvas.height;
+                drawWidth = watermelonWastelandImage.width * (canvas.height / watermelonWastelandImage.height);
+                offsetX = (canvas.width - drawWidth) / 2;
+                offsetY = 0;
+            }
+            else {
+                drawWidth = canvas.width;
+                drawHeight = watermelonWastelandImage.height * (canvas.width / watermelonWastelandImage.width);
+                offsetX = 0;
+                offsetY = (canvas.height - drawHeight) / 2;
+            }
+            ctx.drawImage(watermelonWastelandImage, offsetX, offsetY, drawWidth, drawHeight);
+        }
+        else {
+            // Fallback if image not loaded
+            ctx.fillStyle = '#e8f4f8';
+            ctx.fillRect(0, 0, 800, 600);
+        }
+        
         // Title
         ctx.fillStyle = '#2d4563';
         ctx.font = '20px "Press Start 2P"';
@@ -380,51 +666,136 @@ class PaperWastelandLevel {
         ctx.fillText('Watermelon Wasteland', 400, 40);
         ctx.font = '12px "Press Start 2P"';
         ctx.fillText(`Score: ${this.score}/${this.targetScore}`, 400, 70);
-        // Hippo
-        ctx.fillStyle = '#8b7aa8';
-        ctx.fillRect(this.hippo.x, this.hippo.y, this.hippo.width, this.hippo.height);
-        ctx.fillStyle = '#6a5a88';
-        ctx.fillRect(this.hippo.x + 5, this.hippo.y + 5, 10, 10); // eye
-        ctx.fillRect(this.hippo.x + 25, this.hippo.y + 5, 10, 10); // eye
+        
+        // Draw hippo target
+        ctx.imageSmoothingEnabled = false;
+        if (this.hippoTarget.mouthOpen && hippoMouthOpenLoaded) {
+            ctx.drawImage(hippoMouthOpenImage, this.hippoTarget.x, this.hippoTarget.y, 
+                         this.hippoTarget.width, this.hippoTarget.height);
+        } else if (!this.hippoTarget.mouthOpen && hippoMouthClosedLoaded) {
+            ctx.drawImage(hippoMouthClosedImage, this.hippoTarget.x, this.hippoTarget.y, 
+                         this.hippoTarget.width, this.hippoTarget.height);
+        } else {
+            // Fallback
+            ctx.fillStyle = '#8b7aa8';
+            ctx.fillRect(this.hippoTarget.x, this.hippoTarget.y, this.hippoTarget.width, this.hippoTarget.height);
+        }
+        
+        // Draw hippo message
+        if (this.hippoTarget.message) {
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#2d4563';
+            ctx.lineWidth = 3;
+            ctx.font = '14px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            const messageX = this.hippoTarget.x + this.hippoTarget.width / 2;
+            const messageY = this.hippoTarget.y - 20;
+            ctx.strokeText(this.hippoTarget.message, messageX, messageY);
+            ctx.fillText(this.hippoTarget.message, messageX, messageY);
+        }
+        
+        // Draw broken watermelons
+        this.brokenWatermelons.forEach(broken => {
+            if (watermelonBrokenLoaded) {
+                ctx.drawImage(watermelonBrokenImage, broken.x - 20, broken.y - 20, 40, 40);
+            } else {
+                ctx.fillStyle = '#8b4513';
+                ctx.beginPath();
+                ctx.arc(broken.x, broken.y, 15, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+        
+        // Draw available watermelons in corner
+        this.watermelons.forEach(watermelon => {
+            if (watermelon.available) {
+                if (watermelonLoaded) {
+                    ctx.drawImage(watermelonImage, watermelon.x, watermelon.y, 
+                                 watermelon.width, watermelon.height);
+                } else {
+                    ctx.fillStyle = '#4ade80';
+                    ctx.fillRect(watermelon.x, watermelon.y, watermelon.width, watermelon.height);
+                }
+            }
+        });
+        
+        // Draw slingshot
+        if (this.loadedWatermelon && slingshotWatermelonLoaded) {
+            ctx.drawImage(slingshotWatermelonImage, this.slingshot.x, this.slingshot.y, 
+                         this.slingshot.width, this.slingshot.height);
+        } else if (!this.loadedWatermelon && slingshotLoaded) {
+            ctx.drawImage(slingshotImage, this.slingshot.x, this.slingshot.y, 
+                         this.slingshot.width, this.slingshot.height);
+        } else {
+            // Fallback
+            ctx.fillStyle = '#8b4513';
+            ctx.fillRect(this.slingshot.x, this.slingshot.y, this.slingshot.width, this.slingshot.height);
+        }
+        
         // Aim line
-        if (gameState.gamePhase === 'playing') {
-            ctx.strokeStyle = 'rgba(255, 100, 100, 0.5)';
-            ctx.lineWidth = 2;
+        if (this.loadedWatermelon && gameState.gamePhase === 'playing') {
+            ctx.strokeStyle = 'rgba(255, 100, 100, 0.6)';
+            ctx.fillStyle = 'rgba(255, 100, 100, 0.8)';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
             ctx.beginPath();
-            const startX = this.hippo.x + this.hippo.width / 2;
-            const startY = this.hippo.y + this.hippo.height / 2;
+            const startX = this.slingshot.x + this.slingshot.width / 2;
+            const startY = this.slingshot.y + 20;
             const angleRad = this.angle * Math.PI / 180;
-            const endX = startX + Math.cos(angleRad) * (this.power + 50);
-            const endY = startY + Math.sin(angleRad) * (this.power + 50);
+            const lineLength = this.power + 100;
+            const endX = startX + Math.cos(angleRad) * lineLength;
+            const endY = startY + Math.sin(angleRad) * lineLength;
             ctx.moveTo(startX, startY);
             ctx.lineTo(endX, endY);
             ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Draw arrow at the end of the aim line
+            const arrowSize = 15;
+            ctx.save();
+            ctx.translate(endX, endY);
+            ctx.rotate(angleRad);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-arrowSize, -arrowSize / 2);
+            ctx.lineTo(-arrowSize, arrowSize / 2);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
         }
+        
         // Power bar
         if (this.charging) {
+            const barWidth = 100;
+            const barHeight = 15;
+            const barX = this.slingshot.x + (this.slingshot.width - barWidth) / 2;
+            const barY = this.slingshot.y - 30;
+            
             ctx.fillStyle = '#4ade80';
-            ctx.fillRect(this.hippo.x, this.hippo.y - 20, this.power * 0.4, 10);
+            ctx.fillRect(barX, barY, (this.power / 100) * barWidth, barHeight);
             ctx.strokeStyle = '#2d4563';
-            ctx.strokeRect(this.hippo.x, this.hippo.y - 20, 40, 10);
+            ctx.lineWidth = 2;
+            ctx.strokeRect(barX, barY, barWidth, barHeight);
         }
-        // Hoop
-        ctx.strokeStyle = '#f87171';
-        ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.arc(this.hoop.x + this.hoop.width / 2, this.hoop.y + this.hoop.height / 2, this.hoop.width / 2, 0, Math.PI * 2);
-        ctx.stroke();
-        // Paper balls
-        this.paperBalls.forEach(ball => {
-            ctx.fillStyle = '#fbbf24';
-            ctx.beginPath();
-            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-            ctx.fill();
+        
+        // Draw projectiles
+        this.projectiles.forEach(proj => {
+            if (watermelonLoaded) {
+                ctx.drawImage(watermelonImage, proj.x - proj.radius, proj.y - proj.radius, 
+                             proj.radius * 2, proj.radius * 2);
+            } else {
+                ctx.fillStyle = '#4ade80';
+                ctx.beginPath();
+                ctx.arc(proj.x, proj.y, proj.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
         });
     }
+    
     cleanup() {
-        canvas.removeEventListener('mousedown', this.startCharge.bind(this));
-        canvas.removeEventListener('mouseup', this.shoot.bind(this));
-        canvas.removeEventListener('mousemove', this.updateAngle.bind(this));
+        canvas.removeEventListener('mousedown', this.mouseDownHandler);
+        canvas.removeEventListener('mouseup', this.mouseUpHandler);
+        canvas.removeEventListener('mousemove', this.mouseMoveHandler);
     }
 }
 // ===================
@@ -885,9 +1256,16 @@ class SkyBridgeLevel {
 // Level management
 let currentLevelInstance = null;
 function startLevel(levelIndex) {
-    gameState.gamePhase = 'playing';
+    gameState.gamePhase = 'dialogue';
+    // Set background for level dialogues
+    if (levelIndex === 0) {
+        currentDialogueBackground = 'level1'; // Use watermelon wasteland background
+    }
+    else {
+        currentDialogueBackground = 'intro'; // Use hippo-hero for other levels
+    }
     const levelIntros = [
-        ["Welcome, brave traveler, to the Watermelon Wasteland!", "I cannot guide you until I have regained my strength. These lands have drained me. Bring me fuel — sweet, juicy fuel..."],
+        ["Welcome, brave traveler, to the Watermelon Wasteland!", "I cannot guide you until I have regained my strength. These lands have drained me. Bring me fuel—sweet, juicy fuel..."],
         ["You have reached the Orchard of Oddities!", "Catch the winter items (stars, snowflakes, trees) but avoid the summer ones!"],
         ["Behold, the Mirror Meadow!", "Click and drag the mirrors to reflect the light beam to the red target."],
         ["The Cipher Stones await your wisdom!", "Select all the solid glyphs and avoid the hollow ones."],
@@ -1061,15 +1439,18 @@ function startGameIntro() {
     const nameInputScreen = document.getElementById('name-input-screen');
     customizationScreen.classList.add('hidden');
     nameInputScreen.classList.add('hidden');
-    // Update game phase
+    // Update game phase and set intro background
     gameState.gamePhase = 'dialogue';
+    currentDialogueBackground = 'intro'; // Use hippo-hero background
     updateUIVisibility();
     const greeting = gameState.playerName ? `Greetings, ${gameState.playerName}! I am the Winter Spirit.` : "Greetings, traveler! I am the Winter Spirit.";
     showDialogue([
         greeting,
-        "The land is frozen in eternal winter, and only you can restore balance.",
+        "The land is frozen in eternal winter and I have lost my companion in the midst of the winter storm.",
+        "Only you can restore balance and bring my companion back.",
+        "The villagers say he was last seen inside the Winter Tower, locked behind a gate.",
         "Complete the Five Winter Trials to earn the Runes of Winter.",
-        "With these runes, you shall unlock the ancient Winter Gate.",
+        "With these runes, you shall unlock the ancient gate to the Winter Tower.",
         "Your journey begins now... Good luck!"
     ], () => {
         startLevel(0);
@@ -1096,14 +1477,155 @@ const musicToggleButton = document.getElementById('music-toggle-button');
 musicToggleButton.addEventListener('click', () => {
     toggleMusicMute();
 });
-// Try to start background music on page load
+// Try to start background music on page load immediately
 // Note: Some browsers may block autoplay until user interaction
 startBackgroundMusic();
-// Ensure music plays on first user interaction if autoplay was blocked
-document.addEventListener('click', () => {
-    if (backgroundMusic.paused) {
+
+// Ensure music plays on ANY user interaction if autoplay was blocked
+const ensureMusicPlays = () => {
+    if (backgroundMusic.paused && !isMuted) {
         startBackgroundMusic();
     }
-}, { once: true });
+};
+
+// Try on multiple event types to ensure music starts
+document.addEventListener('click', ensureMusicPlays);
+document.addEventListener('keydown', ensureMusicPlays);
+document.addEventListener('touchstart', ensureMusicPlays);
+
+// Also try to start music after a short delay
+setTimeout(() => {
+    if (backgroundMusic.paused && !isMuted) {
+        startBackgroundMusic();
+    }
+}, 100);
 // Start game loop (shows home screen initially)
 gameLoop();
+
+// =====================
+// ADMIN PANEL
+// =====================
+const adminToggle = document.getElementById('admin-toggle');
+const adminPanel = document.getElementById('admin-panel');
+const adminClose = document.getElementById('admin-close');
+
+// Toggle admin panel
+adminToggle.addEventListener('click', () => {
+    adminPanel.classList.toggle('open');
+});
+
+adminClose.addEventListener('click', () => {
+    adminPanel.classList.remove('open');
+});
+
+// Admin functions to jump to different game states
+function jumpToLevelStart(levelIndex) {
+    // Clean up current level if any
+    if (currentLevelInstance && currentLevelInstance.cleanup) {
+        currentLevelInstance.cleanup();
+    }
+    currentLevelInstance = null;
+    
+    // Hide all overlays
+    document.getElementById('start-game-overlay').classList.add('hidden');
+    document.getElementById('customization-screen').classList.add('hidden');
+    document.getElementById('name-input-screen').classList.add('hidden');
+    document.getElementById('final-gate').classList.add('hidden');
+    dialogueBox.classList.add('hidden');
+    
+    // Set game state
+    gameState.currentLevel = levelIndex;
+    gameState.levelComplete = false;
+    gameState.playerName = 'Admin';
+    showRuneDisplay = false;
+    
+    // Update UI
+    updateUIVisibility();
+    
+    // Start the level
+    startLevel(levelIndex);
+    
+    // Close admin panel
+    adminPanel.classList.remove('open');
+}
+
+function jumpToLevelEnd(levelIndex) {
+    // Clean up current level if any
+    if (currentLevelInstance && currentLevelInstance.cleanup) {
+        currentLevelInstance.cleanup();
+    }
+    currentLevelInstance = null;
+    
+    // Hide all overlays
+    document.getElementById('start-game-overlay').classList.add('hidden');
+    document.getElementById('customization-screen').classList.add('hidden');
+    document.getElementById('name-input-screen').classList.add('hidden');
+    document.getElementById('final-gate').classList.add('hidden');
+    
+    // Set game state
+    gameState.currentLevel = levelIndex;
+    gameState.levelComplete = true;
+    gameState.playerName = 'Admin';
+    
+    // Add a rune if not already at max
+    if (gameState.runes.length <= levelIndex) {
+        const neededRunes = levelIndex + 1 - gameState.runes.length;
+        for (let i = 0; i < neededRunes; i++) {
+            awardRune();
+        }
+    }
+    
+    // Update UI
+    updateUIVisibility();
+    
+    // Show completion dialogue with appropriate rune image for the level (0-4)
+    showRuneDisplay = levelIndex;
+    
+    const levelMessages = [
+        "Well done, brave traveler! You have earned a Rune of Winter.",
+        "The ancient power flows through you. Your journey continues..."
+    ];
+    
+    showDialogue(levelMessages, () => {
+        showRuneDisplay = false;
+        gameState.currentLevel++;
+        gameState.levelComplete = false;
+        if (gameState.currentLevel >= 5) {
+            showFinalGate();
+        } else {
+            startLevel(gameState.currentLevel);
+        }
+    });
+    
+    // Close admin panel
+    adminPanel.classList.remove('open');
+}
+
+// Add event listeners for admin buttons
+document.querySelectorAll('.admin-button').forEach(button => {
+    button.addEventListener('click', (e) => {
+        const action = e.target.getAttribute('data-action');
+        
+        if (action === 'level1-start') {
+            jumpToLevelStart(0);
+        } else if (action === 'level1-end') {
+            jumpToLevelEnd(0);
+        } else if (action === 'level2-start') {
+            jumpToLevelStart(1);
+        } else if (action === 'level2-end') {
+            jumpToLevelEnd(1);
+        } else if (action === 'level3-start') {
+            jumpToLevelStart(2);
+        } else if (action === 'level3-end') {
+            jumpToLevelEnd(2);
+        } else if (action === 'level4-start') {
+            jumpToLevelStart(3);
+        } else if (action === 'level4-end') {
+            jumpToLevelEnd(3);
+        } else if (action === 'level5-start') {
+            jumpToLevelStart(4);
+        } else if (action === 'level5-end') {
+            jumpToLevelEnd(4);
+        }
+    });
+});

@@ -42,6 +42,13 @@ winterBackgroundImage.onload = () => {
     winterBackgroundLoaded = true;
 };
 
+const watermelonWastelandImage = new Image();
+watermelonWastelandImage.src = 'watermelon-wasteland-background.png';
+let watermelonWastelandLoaded = false;
+watermelonWastelandImage.onload = () => {
+    watermelonWastelandLoaded = true;
+};
+
 // Load and setup audio
 const backgroundMusic = new Audio('background-music.mp3');
 backgroundMusic.loop = true;
@@ -208,38 +215,49 @@ function drawTitleScreen() {
 }
 
 // Dialogue Screen Background
+let currentDialogueBackground: 'intro' | 'level1' = 'intro';
+
 function drawDialogueScreen() {
-    // Draw hippo hero image filling entire canvas
-    if (hippoHeroLoaded) {
-        // Fill the entire canvas with the image
-        ctx.imageSmoothingEnabled = false;
-        
-        // Calculate scaling to fill canvas while maintaining aspect ratio
-        const canvasAspect = canvas.width / canvas.height;
-        const imageAspect = hippoHeroImage.width / hippoHeroImage.height;
-        
-        let drawWidth, drawHeight, offsetX, offsetY;
-        
-        if (imageAspect > canvasAspect) {
-            // Image is wider - fit to height
-            drawHeight = canvas.height;
-            drawWidth = hippoHeroImage.width * (canvas.height / hippoHeroImage.height);
-            offsetX = (canvas.width - drawWidth) / 2;
-            offsetY = 0;
-        } else {
-            // Image is taller - fit to width
-            drawWidth = canvas.width;
-            drawHeight = hippoHeroImage.height * (canvas.width / hippoHeroImage.width);
-            offsetX = 0;
-            offsetY = (canvas.height - drawHeight) / 2;
-        }
-        
-        ctx.drawImage(hippoHeroImage, offsetX, offsetY, drawWidth, drawHeight);
+    ctx.imageSmoothingEnabled = false;
+    
+    // Choose background based on current dialogue context
+    let backgroundImage: HTMLImageElement;
+    let imageLoaded: boolean;
+    
+    if (currentDialogueBackground === 'level1' && watermelonWastelandLoaded) {
+        backgroundImage = watermelonWastelandImage;
+        imageLoaded = watermelonWastelandLoaded;
+    } else if (hippoHeroLoaded) {
+        backgroundImage = hippoHeroImage;
+        imageLoaded = hippoHeroLoaded;
     } else {
         // Fallback background while image loads
         ctx.fillStyle = '#2d4563';
         ctx.fillRect(0, 0, 800, 600);
+        return;
     }
+    
+    // Fill the entire canvas with the selected image
+    const canvasAspect = canvas.width / canvas.height;
+    const imageAspect = backgroundImage.width / backgroundImage.height;
+    
+    let drawWidth, drawHeight, offsetX, offsetY;
+    
+    if (imageAspect > canvasAspect) {
+        // Image is wider - fit to height
+        drawHeight = canvas.height;
+        drawWidth = backgroundImage.width * (canvas.height / backgroundImage.height);
+        offsetX = (canvas.width - drawWidth) / 2;
+        offsetY = 0;
+    } else {
+        // Image is taller - fit to width
+        drawWidth = canvas.width;
+        drawHeight = backgroundImage.height * (canvas.width / backgroundImage.width);
+        offsetX = 0;
+        offsetY = (canvas.height - drawHeight) / 2;
+    }
+    
+    ctx.drawImage(backgroundImage, offsetX, offsetY, drawWidth, drawHeight);
 }
 
 // Dialogue system
@@ -438,9 +456,32 @@ class PaperWastelandLevel {
     }
     
     draw() {
-        // Clear
-        ctx.fillStyle = '#e8f4f8';
-        ctx.fillRect(0, 0, 800, 600);
+        // Draw watermelon wasteland background
+        if (watermelonWastelandLoaded) {
+            ctx.imageSmoothingEnabled = false;
+            const canvasAspect = canvas.width / canvas.height;
+            const imageAspect = watermelonWastelandImage.width / watermelonWastelandImage.height;
+            
+            let drawWidth, drawHeight, offsetX, offsetY;
+            
+            if (imageAspect > canvasAspect) {
+                drawHeight = canvas.height;
+                drawWidth = watermelonWastelandImage.width * (canvas.height / watermelonWastelandImage.height);
+                offsetX = (canvas.width - drawWidth) / 2;
+                offsetY = 0;
+            } else {
+                drawWidth = canvas.width;
+                drawHeight = watermelonWastelandImage.height * (canvas.width / watermelonWastelandImage.width);
+                offsetX = 0;
+                offsetY = (canvas.height - drawHeight) / 2;
+            }
+            
+            ctx.drawImage(watermelonWastelandImage, offsetX, offsetY, drawWidth, drawHeight);
+        } else {
+            // Fallback if image not loaded
+            ctx.fillStyle = '#e8f4f8';
+            ctx.fillRect(0, 0, 800, 600);
+        }
         
         // Title
         ctx.fillStyle = '#2d4563';
@@ -1026,7 +1067,14 @@ class SkyBridgeLevel {
 let currentLevelInstance: any = null;
 
 function startLevel(levelIndex: number) {
-    gameState.gamePhase = 'playing';
+    gameState.gamePhase = 'dialogue';
+    
+    // Set background for level dialogues
+    if (levelIndex === 0) {
+        currentDialogueBackground = 'level1'; // Use watermelon wasteland background
+    } else {
+        currentDialogueBackground = 'intro'; // Use hippo-hero for other levels
+    }
     
     const levelIntros = [
         ["Welcome, brave traveler, to the Watermelon Wasteland!", "I cannot guide you until I have regained my strength. These lands have drained me. Bring me fuel—sweet, juicy fuel..."],
@@ -1232,8 +1280,9 @@ function startGameIntro() {
     customizationScreen.classList.add('hidden');
     nameInputScreen.classList.add('hidden');
     
-    // Update game phase
+    // Update game phase and set intro background
     gameState.gamePhase = 'dialogue';
+    currentDialogueBackground = 'intro'; // Use hippo-hero background
     updateUIVisibility();
     
     const greeting = gameState.playerName ? `Greetings, ${gameState.playerName}! I am the Winter Spirit.` : "Greetings, traveler! I am the Winter Spirit.";
