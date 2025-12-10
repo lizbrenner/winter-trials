@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hippo & The Five Winter Trials</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="start-game-overlay" class="start-game-overlay">
+            <button id="start-game-button" class="start-game-button pixel-button">Start Game</button>
+        </div>
+        <div id="customization-screen" class="customization-screen hidden">
+            <div class="customization-content">
+                <h2 class="customization-title">Choose your sprite</h2>
+                
+                <div class="customization-layout">
+                    <!-- Left side - Options in 3x3 grid -->
+                    <div class="customization-options">
+                        <div class="options-grid">
+                            <!-- Row 1: Characters -->
+                            <div class="option-card" data-character="penguin">
+                                <img src="penguin.png" alt="Penguin" class="option-image">
+                            </div>
+                            <div class="option-card" data-character="snowman">
+                                <img src="snowman.png" alt="Snowman" class="option-image">
+                            </div>
+                            <div class="option-card" data-character="yeti">
+                                <img src="yeti.png" alt="Yeti" class="option-image">
+                            </div>
+                            
+                            <!-- Row 2: Scarves -->
+                            <div class="option-card" data-scarf="red">
+                                <img src="red.png" alt="Red Scarf" class="option-image">
+                            </div>
+                            <div class="option-card" data-scarf="blue">
+                                <img src="blue.png" alt="Blue Scarf" class="option-image">
+                            </div>
+                            <div class="option-card" data-scarf="green">
+                                <img src="green.png" alt="Green Scarf" class="option-image">
+                            </div>
+                            
+                            <!-- Row 3: Transport -->
+                            <div class="option-card" data-transport="reindeer">
+                                <img src="reindeer.png" alt="Reindeer" class="option-image">
+                            </div>
+                            <div class="option-card" data-transport="sled">
+                                <img src="sled.png" alt="Sled" class="option-image">
+                            </div>
+                            <div class="option-card" data-transport="snowboard">
+                                <img src="snowboard.png" alt="Snowboard" class="option-image">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right side - Preview -->
+                    <div class="customization-preview">
+                        <div class="preview-container">
+                            <img id="character-preview" src="penguin-red-sled.png" alt="Character Preview" class="preview-image">
+                        </div>
+                        <button id="next-to-name-button" class="next-button pixel-button">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="name-input-screen" class="name-input-screen hidden">
+            <div class="name-input-content">
+                <h2 class="name-input-title">Provide a name</h2>
+                
+                <div class="selected-sprite-display">
+                    <img id="selected-sprite-preview" src="penguin-red-sled.png" alt="Your Character" class="selected-sprite-image">
+                </div>
+                
+                <input type="text" id="player-name-input" class="player-name-input" placeholder="input name..." maxlength="20">
+                
+                <div class="name-screen-buttons">
+                    <button id="back-to-sprite-button" class="back-button pixel-button">Back</button>
+                    <button id="confirm-name-button" class="confirm-button pixel-button">Confirm</button>
+                </div>
+            </div>
+        </div>
+        <div id="dialogue-box" class="dialogue-box hidden">
+            <div class="spirit-icon">
+                <img src="hippo-avatar.png" alt="Hippo" class="spirit-hippo">
+            </div>
+            <div class="dialogue-content">
+                <p id="dialogue-text"></p>
+                <button id="dialogue-next" class="pixel-button">Continue</button>
+            </div>
+        </div>
+        <div id="rune-display" class="rune-display">
+            <div class="rune-title">Runes of Winter</div>
+            <div id="rune-collection" class="rune-collection"></div>
+        </div>
+        <button id="restart-button" class="restart-button pixel-button">Start Over</button>
+        <button id="music-toggle-button" class="music-toggle-button pixel-button">🔊</button>
+        <div id="final-gate" class="final-gate hidden">
+            <div class="gate-content">
+                <h2>The Winter Gate Awaits</h2>
+                <p class="gate-text">Your runes glow with ancient power:</p>
+                <div id="final-runes" class="final-runes"></div>
+                <p class="gate-text">Speak the word of passage to unlock the gate:</p>
+                <input type="text" id="password-input" class="password-input" maxlength="5" autocomplete="off">
+                <button id="submit-password" class="pixel-button">Unlock Gate</button>
+                <p id="gate-message" class="gate-message"></p>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="game.js"></script>
+</body>
+</html>
+
