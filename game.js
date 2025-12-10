@@ -302,7 +302,7 @@ function drawDialogueScreen() {
         let currentRuneLoaded = false;
         
         switch(showRuneDisplay) {
-            case 0: // Level 1 - Watermelon Wasteland
+            case 0: // Level 1 - Jollygut Hollow
                 currentRuneImage = runeOImage;
                 currentRuneLoaded = runeOLoaded;
                 break;
@@ -456,7 +456,7 @@ function showFinalGate() {
     };
 }
 // ===================
-// LEVEL 1: Watermelon Wasteland
+// LEVEL 1: Jollygut Hollow
 // ===================
 class PaperWastelandLevel {
     constructor() {
@@ -633,7 +633,7 @@ class PaperWastelandLevel {
     }
     
     draw() {
-        // Draw watermelon wasteland background
+        // Draw Jollygut Hollow background
         if (watermelonWastelandLoaded) {
             ctx.imageSmoothingEnabled = false;
             const canvasAspect = canvas.width / canvas.height;
@@ -663,7 +663,7 @@ class PaperWastelandLevel {
         ctx.fillStyle = '#2d4563';
         ctx.font = '20px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('Watermelon Wasteland', 400, 40);
+        ctx.fillText('Jollygut Hollow', 400, 40);
         ctx.font = '12px "Press Start 2P"';
         ctx.fillText(`Score: ${this.score}/${this.targetScore}`, 400, 70);
         
@@ -1259,13 +1259,13 @@ function startLevel(levelIndex) {
     gameState.gamePhase = 'dialogue';
     // Set background for level dialogues
     if (levelIndex === 0) {
-        currentDialogueBackground = 'level1'; // Use watermelon wasteland background
+        currentDialogueBackground = 'level1'; // Use Jollygut Hollow background
     }
     else {
         currentDialogueBackground = 'intro'; // Use hippo-hero for other levels
     }
     const levelIntros = [
-        ["Welcome, brave traveler, to the Watermelon Wasteland!", "I cannot guide you until I have regained my strength. These lands have drained me. Bring me fuel—sweet, juicy fuel..."],
+        ["Welcome, brave traveler, to Jollygut Hollow!", "I cannot guide you until I have regained my strength. These lands have drained me. Bring me fuel—sweet, juicy fuel..."],
         ["You have reached the Orchard of Oddities!", "Catch the winter items (stars, snowflakes, trees) but avoid the summer ones!"],
         ["Behold, the Mirror Meadow!", "Click and drag the mirrors to reflect the light beam to the red target."],
         ["The Cipher Stones await your wisdom!", "Select all the solid glyphs and avoid the hollow ones."],
@@ -1451,6 +1451,7 @@ function startGameIntro() {
         "The villagers say he was last seen inside the Winter Tower, locked behind a gate.",
         "Complete the Five Winter Trials to earn the Runes of Winter.",
         "With these runes, you shall unlock the ancient gate to the Winter Tower.",
+        "Bountiful treasures await if you can bring my companinion back safely.",
         "Your journey begins now... Good luck!"
     ], () => {
         startLevel(0);
