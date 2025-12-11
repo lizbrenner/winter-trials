@@ -243,7 +243,7 @@ body::after {
     color: transparent !important;
     cursor: pointer;
     transition: none !important;
-    transform: none !important;
+    transform: scale(1) !important;
     image-rendering: pixelated;
     outline: none;
     -webkit-tap-highlight-color: transparent;
@@ -280,7 +280,7 @@ body::after {
     background-repeat: no-repeat !important;
     background-color: transparent !important;
     color: transparent !important;
-    transform: none !important;
+    transform: scale(1) !important;
     box-shadow: none !important;
 }
 
@@ -365,6 +365,16 @@ body::after {
 .customization-title-image {
     max-width: 210px;
     max-height: 84px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+.name-input-title-image {
+    max-width: 231px;
+    max-height: 92px;
     margin-top: 20px;
     margin-bottom: 20px;
     display: block;
@@ -613,13 +623,13 @@ body::after {
     background-color: transparent !important;
     border: none !important;
     padding: 8px;
-    width: 200px;
-    height: 50px;
+    width: 280px;
+    height: 70px;
     font-size: 0;
     color: transparent !important;
     cursor: pointer;
     transition: none !important;
-    transform: none !important;
+    transform: scale(1) !important;
     image-rendering: pixelated;
     outline: none;
     -webkit-tap-highlight-color: transparent;
@@ -636,7 +646,7 @@ body::after {
     background-repeat: no-repeat !important;
     background-color: transparent !important;
     color: transparent !important;
-    transform: none !important;
+    transform: scale(1) !important;
 }
 
 .next-button:active {
@@ -748,15 +758,16 @@ button.next-button:hover::after {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 350px;
-    height: 350px;
+    width: 280px;
+    height: 280px;
     position: relative;
     image-rendering: pixelated;
+    margin-top: -50px;
 }
 
 .selected-sprite-display .layered-preview {
-    width: 280px;
-    height: 280px;
+    width: 220px;
+    height: 220px;
 }
 
 .player-name-input {
@@ -765,11 +776,11 @@ button.next-button:hover::after {
     color: #ffffff;
     border: 4px solid #6dd5ed;
     border-radius: 12px;
-    padding: 20px 30px;
-    font-size: 18px;
+    padding: 12px 20px;
+    font-size: 16px;
     text-align: center;
     width: 100%;
-    max-width: 700px;
+    max-width: 450px;
     letter-spacing: 2px;
 }
 
@@ -1157,7 +1168,7 @@ button#start-game-button,
     color: transparent !important;
     cursor: pointer !important;
     transition: none !important;
-    transform: none !important;
+    transform: scale(1) !important;
     image-rendering: pixelated !important;
     outline: none !important;
     box-shadow: none !important;
@@ -1177,7 +1188,7 @@ button#start-game-button:hover,
     background-repeat: no-repeat !important;
     background-color: transparent !important;
     color: transparent !important;
-    transform: none !important;
+    transform: scale(1) !important;
     box-shadow: none !important;
     border: none !important;
 }
@@ -1226,13 +1237,13 @@ button#next-to-name-button,
     background-color: transparent !important;
     border: none !important;
     padding: 8px !important;
-    width: 200px !important;
-    height: 50px !important;
+    width: 280px !important;
+    height: 70px !important;
     font-size: 0 !important;
     color: transparent !important;
     cursor: pointer !important;
     transition: none !important;
-    transform: none !important;
+    transform: scale(1) !important;
     image-rendering: pixelated !important;
     outline: none !important;
     box-shadow: none !important;
@@ -1252,7 +1263,7 @@ button#next-to-name-button:hover,
     background-repeat: no-repeat !important;
     background-color: transparent !important;
     color: transparent !important;
-    transform: none !important;
+    transform: scale(1) !important;
     box-shadow: none !important;
     border: none !important;
 }
@@ -1289,5 +1300,22 @@ button#next-to-name-button:hover::after {
     height: 0 !important;
     position: absolute !important;
     left: -99999px !important;
+}
+
+/* Ultra-specific overrides to eliminate ALL hover effects */
+button[id="start-game-button"],
+button[id="start-game-button"]:hover,
+button[id="start-game-button"]:focus,
+button[id="start-game-button"]:active {
+    transform: scale(1) !important;
+    transition: none !important;
+}
+
+button[id="next-to-name-button"],
+button[id="next-to-name-button"]:hover,
+button[id="next-to-name-button"]:focus,
+button[id="next-to-name-button"]:active {
+    transform: scale(1) !important;
+    transition: none !important;
 }
 
