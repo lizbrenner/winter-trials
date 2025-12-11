@@ -821,25 +821,125 @@ button.next-button:hover::after {
 }
 
 .confirm-button {
-    background: linear-gradient(180deg, #ffd700 0%, #ffb700 100%);
-    color: #000;
-    border: 4px solid #d4a017;
-    border-radius: 12px;
-    padding: 18px 60px;
-    font-size: 20px;
-    box-shadow: 0 4px 0 #8b6914, 0 8px 15px rgba(0, 0, 0, 0.4);
-    text-transform: capitalize;
+    background: url('continue-button.png') !important;
+    background-size: contain !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    border: none !important;
+    padding: 8px;
+    width: 280px;
+    height: 70px;
+    font-size: 0;
+    color: transparent !important;
+    cursor: pointer;
+    transition: none !important;
+    transform: scale(1) !important;
+    image-rendering: pixelated;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+    overflow: hidden !important;
+    background-origin: content-box !important;
+    background-clip: content-box !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
 }
 
 .confirm-button:hover {
-    background: linear-gradient(180deg, #ffed4e 0%, #ffd700 100%);
-    transform: translateY(2px);
-    box-shadow: 0 2px 0 #8b6914, 0 4px 10px rgba(0, 0, 0, 0.4);
+    background: url('continue-button.png') !important;
+    background-size: contain !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    color: transparent !important;
+    transform: scale(1) !important;
+    box-shadow: none !important;
 }
 
 .confirm-button:active {
-    transform: translateY(4px);
-    box-shadow: 0 0 0 #8b6914, 0 2px 5px rgba(0, 0, 0, 0.4);
+    background: url('continue-button.png') !important;
+    background-size: contain !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    transform: scale(1) !important;
+    box-shadow: none !important;
+}
+
+button.confirm-button,
+button#confirm-name-button,
+#confirm-name-button {
+    background: url('continue-button.png') !important;
+    background-size: contain !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    border: none !important;
+    padding: 8px !important;
+    width: 280px !important;
+    height: 70px !important;
+    font-size: 0 !important;
+    color: transparent !important;
+    cursor: pointer !important;
+    transition: none !important;
+    transform: scale(1) !important;
+    image-rendering: pixelated !important;
+    outline: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    position: relative !important;
+    overflow: hidden !important;
+    background-origin: content-box !important;
+    background-clip: content-box !important;
+}
+
+button.confirm-button:hover,
+button#confirm-name-button:hover,
+#confirm-name-button:hover {
+    background: url('continue-button.png') !important;
+    background-size: contain !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    color: transparent !important;
+    transform: scale(1) !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+button.confirm-button:active,
+button#confirm-name-button:active,
+#confirm-name-button:active {
+    background: url('continue-button.png') !important;
+    background-size: contain !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    transform: scale(1) !important;
+    box-shadow: none !important;
+}
+
+button.confirm-button::before,
+button.confirm-button::after,
+button#confirm-name-button::before,
+button#confirm-name-button::after,
+#confirm-name-button::before,
+#confirm-name-button::after,
+.confirm-button::before,
+.confirm-button::after,
+button.confirm-button:hover::before,
+button.confirm-button:hover::after,
+button#confirm-name-button:hover::before,
+button#confirm-name-button:hover::after {
+    display: none !important;
+    content: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    position: absolute !important;
+    left: -99999px !important;
 }
 
 .rune-title {
@@ -1314,6 +1414,14 @@ button[id="next-to-name-button"],
 button[id="next-to-name-button"]:hover,
 button[id="next-to-name-button"]:focus,
 button[id="next-to-name-button"]:active {
+    transform: scale(1) !important;
+    transition: none !important;
+}
+
+button[id="confirm-name-button"],
+button[id="confirm-name-button"]:hover,
+button[id="confirm-name-button"]:focus,
+button[id="confirm-name-button"]:active {
     transform: scale(1) !important;
     transition: none !important;
 }
