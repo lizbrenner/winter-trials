@@ -146,6 +146,12 @@ body::after {
     outline: none;
 }
 
+.pixel-button::before,
+.pixel-button::after {
+    display: none !important;
+    content: none !important;
+}
+
 .rune-display {
     position: absolute;
     top: 20px;
@@ -230,9 +236,9 @@ body::after {
     background-repeat: no-repeat !important;
     background-color: transparent !important;
     border: none !important;
-    padding: 0;
-    width: 200px;
-    height: 80px;
+    padding: 8px;
+    width: 150px;
+    height: 60px;
     font-size: 0;
     color: transparent !important;
     cursor: pointer;
@@ -242,9 +248,11 @@ body::after {
     outline: none;
     -webkit-tap-highlight-color: transparent;
     position: relative;
-    overflow: hidden;
+    overflow: hidden !important;
     box-shadow: none !important;
     text-shadow: none !important;
+    background-origin: content-box !important;
+    background-clip: content-box !important;
 }
 
 .start-game-button::before {
@@ -269,6 +277,7 @@ body::after {
     background: url('play-button.png') !important;
     background-size: contain !important;
     background-position: center !important;
+    background-repeat: no-repeat !important;
     background-color: transparent !important;
     color: transparent !important;
     transform: none !important;
@@ -279,6 +288,7 @@ body::after {
     background: url('play-button.png') !important;
     background-size: contain !important;
     background-position: center !important;
+    background-repeat: no-repeat !important;
     background-color: transparent !important;
     transform: none !important;
     box-shadow: none !important;
@@ -602,9 +612,9 @@ body::after {
     background-repeat: no-repeat !important;
     background-color: transparent !important;
     border: none !important;
-    padding: 0;
-    width: 150px;
-    height: 60px;
+    padding: 8px;
+    width: 200px;
+    height: 50px;
     font-size: 0;
     color: transparent !important;
     cursor: pointer;
@@ -614,13 +624,16 @@ body::after {
     outline: none;
     -webkit-tap-highlight-color: transparent;
     position: relative;
-    overflow: hidden;
+    overflow: hidden !important;
+    background-origin: content-box !important;
+    background-clip: content-box !important;
 }
 
 .next-button:hover {
     background: url('continue-button.png') !important;
     background-size: contain !important;
     background-position: center !important;
+    background-repeat: no-repeat !important;
     background-color: transparent !important;
     color: transparent !important;
     transform: none !important;
@@ -630,6 +643,7 @@ body::after {
     background: url('continue-button.png') !important;
     background-size: contain !important;
     background-position: center !important;
+    background-repeat: no-repeat !important;
     background-color: transparent !important;
     transform: none !important;
 }
@@ -637,6 +651,8 @@ body::after {
 .next-button:focus {
     outline: none;
     background: url('continue-button.png') !important;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
     transform: none !important;
 }
 
@@ -1122,5 +1138,156 @@ button.next-button:hover::after {
 
 .admin-panel::-webkit-scrollbar-thumb:hover {
     background: #5bc5dd;
+}
+
+/* Override pixel-button behavior for image-based buttons */
+button.start-game-button,
+button#start-game-button,
+#start-game-button {
+    background: url('play-button.png') !important;
+    background-size: contain !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    border: none !important;
+    padding: 8px !important;
+    width: 150px !important;
+    height: 60px !important;
+    font-size: 0 !important;
+    color: transparent !important;
+    cursor: pointer !important;
+    transition: none !important;
+    transform: none !important;
+    image-rendering: pixelated !important;
+    outline: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    position: relative !important;
+    overflow: hidden !important;
+    background-origin: content-box !important;
+    background-clip: content-box !important;
+}
+
+button.start-game-button:hover,
+button#start-game-button:hover,
+#start-game-button:hover {
+    background: url('play-button.png') !important;
+    background-size: contain !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    color: transparent !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+button.start-game-button:active,
+button#start-game-button:active,
+#start-game-button:active {
+    background: url('play-button.png') !important;
+    background-size: contain !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+button.start-game-button::before,
+button.start-game-button::after,
+button#start-game-button::before,
+button#start-game-button::after,
+#start-game-button::before,
+#start-game-button::after,
+.start-game-button::before,
+.start-game-button::after,
+button.start-game-button:hover::before,
+button.start-game-button:hover::after,
+button#start-game-button:hover::before,
+button#start-game-button:hover::after {
+    display: none !important;
+    content: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    position: absolute !important;
+    left: -99999px !important;
+}
+
+button.next-button,
+button#next-to-name-button,
+#next-to-name-button {
+    background: url('continue-button.png') !important;
+    background-size: contain !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    border: none !important;
+    padding: 8px !important;
+    width: 200px !important;
+    height: 50px !important;
+    font-size: 0 !important;
+    color: transparent !important;
+    cursor: pointer !important;
+    transition: none !important;
+    transform: none !important;
+    image-rendering: pixelated !important;
+    outline: none !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    position: relative !important;
+    overflow: hidden !important;
+    background-origin: content-box !important;
+    background-clip: content-box !important;
+}
+
+button.next-button:hover,
+button#next-to-name-button:hover,
+#next-to-name-button:hover {
+    background: url('continue-button.png') !important;
+    background-size: contain !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    color: transparent !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+button.next-button:active,
+button#next-to-name-button:active,
+#next-to-name-button:active {
+    background: url('continue-button.png') !important;
+    background-size: contain !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+button.next-button::before,
+button.next-button::after,
+button#next-to-name-button::before,
+button#next-to-name-button::after,
+#next-to-name-button::before,
+#next-to-name-button::after,
+.next-button::before,
+.next-button::after,
+button.next-button:hover::before,
+button.next-button:hover::after,
+button#next-to-name-button:hover::before,
+button#next-to-name-button:hover::after {
+    display: none !important;
+    content: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    position: absolute !important;
+    left: -99999px !important;
 }
 
