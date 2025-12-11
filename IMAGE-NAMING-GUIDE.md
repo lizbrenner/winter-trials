@@ -77,3 +77,4 @@ The game starts with these defaults:
 4. The preview shows: `{selectedCharacter}-{selectedScarf}-{selectedTransport}.png`
 5. User clicks "Next" to proceed with their selections
 
+

@@ -14,51 +14,67 @@
         </div>
         <div id="customization-screen" class="customization-screen hidden">
             <div class="customization-content">
-                <h2 class="customization-title">Choose your traveler</h2>
+                <img src="sprite-sign.png" alt="Choose your sprite" class="customization-title-image">
                 
                 <div class="customization-layout">
-                    <!-- Left side - Options in 3x3 grid -->
-                    <div class="customization-options">
-                        <div class="options-grid">
-                            <!-- Row 1: Characters -->
-                            <div class="option-card" data-character="penguin">
-                                <img src="penguin.png" alt="Penguin" class="option-image">
-                            </div>
-                            <div class="option-card" data-character="snowman">
-                                <img src="snowman.png" alt="Snowman" class="option-image">
-                            </div>
-                            <div class="option-card" data-character="yeti">
-                                <img src="yeti.png" alt="Yeti" class="option-image">
-                            </div>
-                            
-                            <!-- Row 2: Scarves -->
-                            <div class="option-card" data-scarf="red">
-                                <img src="red.png" alt="Red Scarf" class="option-image">
-                            </div>
-                            <div class="option-card" data-scarf="blue">
-                                <img src="blue.png" alt="Blue Scarf" class="option-image">
-                            </div>
-                            <div class="option-card" data-scarf="green">
-                                <img src="green.png" alt="Green Scarf" class="option-image">
-                            </div>
-                            
-                            <!-- Row 3: Transport -->
-                            <div class="option-card" data-transport="reindeer">
-                                <img src="reindeer.png" alt="Reindeer" class="option-image">
-                            </div>
-                            <div class="option-card" data-transport="sled">
-                                <img src="sled.png" alt="Sled" class="option-image">
-                            </div>
-                            <div class="option-card" data-transport="snowboard">
-                                <img src="snowboard.png" alt="Snowboard" class="option-image">
+                    <!-- Left side - Vertical Carousels -->
+                    <div class="customization-carousels">
+                        
+                        <!-- Character Carousel -->
+                        <div class="carousel-item">
+                            <div class="carousel-controls">
+                                <button class="carousel-btn carousel-prev" data-carousel="character"></button>
+                                <div class="carousel-display">
+                                    <img id="character-display" src="yeti.png" alt="Character" class="carousel-image">
+                                </div>
+                                <button class="carousel-btn carousel-next" data-carousel="character"></button>
                             </div>
                         </div>
+
+                        <!-- Hat Carousel -->
+                        <div class="carousel-item carousel-group-start">
+                            <div class="carousel-controls">
+                                <button class="carousel-btn carousel-prev" data-carousel="hat"></button>
+                                <div class="carousel-display">
+                                    <img id="hat-display" src="hat-blue.png" alt="Hat" class="carousel-image">
+                                </div>
+                                <button class="carousel-btn carousel-next" data-carousel="hat"></button>
+                            </div>
+                        </div>
+
+                        <!-- Scarf Carousel -->
+                        <div class="carousel-item carousel-group-end">
+                            <div class="carousel-controls">
+                                <button class="carousel-btn carousel-prev" data-carousel="scarf"></button>
+                                <div class="carousel-display">
+                                    <img id="scarf-display" src="scarf-blue.png" alt="Scarf" class="carousel-image">
+                                </div>
+                                <button class="carousel-btn carousel-next" data-carousel="scarf"></button>
+                            </div>
+                        </div>
+
+                        <!-- Transport Carousel -->
+                        <div class="carousel-item">
+                            <div class="carousel-controls">
+                                <button class="carousel-btn carousel-prev" data-carousel="transport"></button>
+                                <div class="carousel-display">
+                                    <img id="transport-display" src="sled.png" alt="Transport" class="carousel-image">
+                                </div>
+                                <button class="carousel-btn carousel-next" data-carousel="transport"></button>
+                            </div>
+                        </div>
+
                     </div>
 
-                    <!-- Right side - Preview -->
+                    <!-- Right side - Layered Preview -->
                     <div class="customization-preview">
                         <div class="preview-container">
-                            <img id="character-preview" src="penguin-red-sled.png" alt="Character Preview" class="preview-image">
+                            <div id="layered-preview" class="layered-preview">
+                                <img id="preview-character" src="yeti.png" alt="Character" class="preview-layer">
+                                <img id="preview-hat" src="hat-blue.png" alt="Hat" class="preview-layer">
+                                <img id="preview-scarf" src="scarf-blue.png" alt="Scarf" class="preview-layer">
+                                <img id="preview-transport" src="sled.png" alt="Transport" class="preview-layer">
+                            </div>
                         </div>
                         <button id="next-to-name-button" class="next-button pixel-button">Next</button>
                     </div>
@@ -70,7 +86,12 @@
                 <h2 class="name-input-title">Provide a name</h2>
                 
                 <div class="selected-sprite-display">
-                    <img id="selected-sprite-preview" src="penguin-red-sled.png" alt="Your Character" class="selected-sprite-image">
+                    <div class="layered-preview">
+                        <img id="name-preview-character" src="yeti.png" alt="Character" class="preview-layer">
+                        <img id="name-preview-hat" src="hat-blue.png" alt="Hat" class="preview-layer">
+                        <img id="name-preview-scarf" src="scarf-blue.png" alt="Scarf" class="preview-layer">
+                        <img id="name-preview-transport" src="sled.png" alt="Transport" class="preview-layer">
+                    </div>
                 </div>
                 
                 <input type="text" id="player-name-input" class="player-name-input" placeholder="input name..." maxlength="20">

@@ -5,8 +5,9 @@ const gameState = {
     levelComplete: false,
     gamePhase: 'intro',
     playerName: '',
-    selectedSprite: 'penguin',
-    selectedCape: 'red',
+    selectedCharacter: 'yeti',
+    selectedHat: 'hat-blue',
+    selectedScarf: 'scarf-blue',
     selectedTransport: 'sled'
 };
 // Canvas setup
@@ -1348,11 +1349,12 @@ function restartGame() {
     // Update UI visibility
     updateUIVisibility();
 }
-// Update character preview image
-function updateCharacterPreview() {
-    const previewImage = document.getElementById('character-preview');
-    const filename = `${gameState.selectedSprite}-${gameState.selectedCape}-${gameState.selectedTransport}.png`;
-    previewImage.src = filename;
+// Update layered preview
+function updateLayeredPreview() {
+    document.getElementById('preview-character').src = `${gameState.selectedCharacter}.png`;
+    document.getElementById('preview-hat').src = `${gameState.selectedHat}.png`;
+    document.getElementById('preview-scarf').src = `${gameState.selectedScarf}.png`;
+    document.getElementById('preview-transport').src = `${gameState.selectedTransport}.png`;
 }
 // Show customization screen
 function showCustomizationScreen() {
@@ -1361,23 +1363,20 @@ function showCustomizationScreen() {
     startGameOverlay.classList.add('hidden');
     customizationScreen.classList.remove('hidden');
     gameState.gamePhase = 'customization';
-    // Set default selections
-    document.querySelector('[data-character="penguin"]')?.classList.add('selected');
-    document.querySelector('[data-scarf="red"]')?.classList.add('selected');
-    document.querySelector('[data-transport="sled"]')?.classList.add('selected');
     // Update preview with defaults
-    updateCharacterPreview();
+    updateLayeredPreview();
 }
 // Show name input screen
 function showNameInputScreen() {
     const customizationScreen = document.getElementById('customization-screen');
     const nameInputScreen = document.getElementById('name-input-screen');
-    const selectedSpritePreview = document.getElementById('selected-sprite-preview');
     customizationScreen.classList.add('hidden');
     nameInputScreen.classList.remove('hidden');
-    // Update the sprite preview
-    const filename = `${gameState.selectedSprite}-${gameState.selectedCape}-${gameState.selectedTransport}.png`;
-    selectedSpritePreview.src = filename;
+    // Update the layered preview on name screen
+    document.getElementById('name-preview-character').src = `${gameState.selectedCharacter}.png`;
+    document.getElementById('name-preview-hat').src = `${gameState.selectedHat}.png`;
+    document.getElementById('name-preview-scarf').src = `${gameState.selectedScarf}.png`;
+    document.getElementById('name-preview-transport').src = `${gameState.selectedTransport}.png`;
 }
 // Go back to sprite selection
 function backToSpriteSelection() {
@@ -1386,35 +1385,65 @@ function backToSpriteSelection() {
     nameInputScreen.classList.add('hidden');
     customizationScreen.classList.remove('hidden');
 }
-// Handle customization selections
+// Handle customization selections with carousels
 function setupCustomization() {
-    // Character selection
-    document.querySelectorAll('[data-character]').forEach(card => {
-        card.addEventListener('click', () => {
-            document.querySelectorAll('[data-character]').forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
-            gameState.selectedSprite = card.getAttribute('data-character') || 'penguin';
-            updateCharacterPreview();
+    // Carousel options
+    const carouselOptions = {
+        character: ['yeti', 'penguin', 'polarbear'],
+        hat: ['hat-blue', 'hat-red', 'hat-brown'],
+        scarf: ['scarf-blue', 'scarf-red', 'scarf-brown'],
+        transport: ['sled', 'reindeer', 'snowboard']
+    };
+    
+    const carouselIndices = {
+        character: 0,
+        hat: 0,
+        scarf: 0,
+        transport: 0
+    };
+    
+    // Function to update carousel display
+    function updateCarousel(type) {
+        const index = carouselIndices[type];
+        const options = carouselOptions[type];
+        const item = options[index];
+        
+        // Update display image
+        const displayImg = document.getElementById(`${type}-display`);
+        displayImg.src = `${item}.png`;
+        
+        // Update game state
+        if (type === 'character') gameState.selectedCharacter = item;
+        else if (type === 'hat') gameState.selectedHat = item;
+        else if (type === 'scarf') gameState.selectedScarf = item;
+        else if (type === 'transport') gameState.selectedTransport = item;
+        
+        // Update layered preview
+        updateLayeredPreview();
+    }
+    
+    // Set up carousel buttons
+    document.querySelectorAll('.carousel-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const carouselType = btn.getAttribute('data-carousel');
+            const isPrev = btn.classList.contains('carousel-prev');
+            
+            if (isPrev) {
+                carouselIndices[carouselType]--;
+                if (carouselIndices[carouselType] < 0) {
+                    carouselIndices[carouselType] = carouselOptions[carouselType].length - 1;
+                }
+            } else {
+                carouselIndices[carouselType]++;
+                if (carouselIndices[carouselType] >= carouselOptions[carouselType].length) {
+                    carouselIndices[carouselType] = 0;
+                }
+            }
+            
+            updateCarousel(carouselType);
         });
     });
-    // Scarf selection
-    document.querySelectorAll('[data-scarf]').forEach(card => {
-        card.addEventListener('click', () => {
-            document.querySelectorAll('[data-scarf]').forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
-            gameState.selectedCape = card.getAttribute('data-scarf') || 'red';
-            updateCharacterPreview();
-        });
-    });
-    // Transport selection
-    document.querySelectorAll('[data-transport]').forEach(card => {
-        card.addEventListener('click', () => {
-            document.querySelectorAll('[data-transport]').forEach(c => c.classList.remove('selected'));
-            card.classList.add('selected');
-            gameState.selectedTransport = card.getAttribute('data-transport') || 'sled';
-            updateCharacterPreview();
-        });
-    });
+    
     // Next button - go to name input
     const nextButton = document.getElementById('next-to-name-button');
     nextButton.addEventListener('click', () => {
