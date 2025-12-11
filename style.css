@@ -135,11 +135,10 @@ body::after {
 .pixel-button:hover {
     background: #2193b0;
     color: #6dd5ed;
-    transform: scale(1.05);
 }
 
 .pixel-button:active {
-    transform: scale(0.95);
+    transform: scale(1);
 }
 
 .pixel-button:focus {
