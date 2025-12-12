@@ -33,6 +33,36 @@ let watermelonWastelandLoaded = false;
 watermelonWastelandImage.onload = () => {
     watermelonWastelandLoaded = true;
 };
+const frozenForestImage = new Image();
+frozenForestImage.src = 'frozen-forest-background.png';
+let frozenForestLoaded = false;
+frozenForestImage.onload = () => {
+    frozenForestLoaded = true;
+};
+const treeBranchImage = new Image();
+treeBranchImage.src = 'tree-branch.png';
+let treeBranchLoaded = false;
+treeBranchImage.onload = () => {
+    treeBranchLoaded = true;
+};
+const icePatchImage = new Image();
+icePatchImage.src = 'ice-patch.png';
+let icePatchLoaded = false;
+icePatchImage.onload = () => {
+    icePatchLoaded = true;
+};
+const treeLogBackImage = new Image();
+treeLogBackImage.src = 'tree-log-back.png';
+let treeLogBackLoaded = false;
+treeLogBackImage.onload = () => {
+    treeLogBackLoaded = true;
+};
+const treeLogFrontImage = new Image();
+treeLogFrontImage.src = 'tree-log-front.png';
+let treeLogFrontLoaded = false;
+treeLogFrontImage.onload = () => {
+    treeLogFrontLoaded = true;
+};
 // Load slingshot and watermelon images for level 1
 const slingshotImage = new Image();
 slingshotImage.src = 'slingshot.png';
@@ -804,101 +834,381 @@ class PaperWastelandLevel {
     }
 }
 // ===================
-// LEVEL 2: Orchard of Oddities
+// LEVEL 2: Frozen Forest
 // ===================
-class OrchardLevel {
+class FrozenForestLevel {
     constructor() {
-        this.basket = { x: 360, y: 520, width: 80, height: 40 };
-        this.fallingItems = [];
-        this.score = 0;
-        this.targetScore = 5;
-        this.spawnTimer = 0;
-        this.goodItems = ['⭐', '❄️', '🎄', '🎁', '✨'];
-        this.badItems = ['🔥', '☀️', '🌵', '🦂', '💥'];
-        canvas.addEventListener('mousemove', this.moveBasket.bind(this));
+        // Load player sprite composite image
+        this.playerSprite = new Image();
+        const compositeFilename = `${gameState.selectedCharacter}-${gameState.selectedHat}-${gameState.selectedTransport}.png`;
+        this.playerSprite.src = compositeFilename;
+        this.playerSpriteLoaded = false;
+        this.playerSprite.onload = () => {
+            this.playerSpriteLoaded = true;
+        };
+        
+        // Player properties
+        this.player = {
+            x: 150,
+            y: 400,
+            width: 120,
+            height: 180,
+            normalHeight: 180,
+            duckHeight: 90,
+            vx: 2, // Auto-run speed
+            vy: 0,
+            normalSpeed: 2,
+            slowSpeed: 1,
+            fastSpeed: 3.5,
+            onGround: true,
+            isDucking: false,
+            isJumping: false
+        };
+        
+        // Physics
+        this.gravity = 0.25;
+        this.jumpPower = -12;
+        this.groundY = 400;
+        
+        // Obstacles
+        this.fallingBranches = [];
+        this.icePatches = [];
+        
+        // Spawn timers
+        this.branchSpawnTimer = 0;
+        this.branchSpawnInterval = 200; // Frames between branch spawns
+        
+        // Level timer (30 seconds = 1800 frames at 60fps)
+        this.levelTimer = 1800;
+        this.timerStarted = false;
+        
+        // Input tracking
+        this.keys = {
+            left: false,
+            right: false,
+            up: false,
+            down: false
+        };
+        
+        // Initialize obstacles
+        this.initializeObstacles();
+        
+        // Bind event handlers
+        this.keyDownHandler = this.handleKeyDown.bind(this);
+        this.keyUpHandler = this.handleKeyUp.bind(this);
+        
+        window.addEventListener('keydown', this.keyDownHandler);
+        window.addEventListener('keyup', this.keyUpHandler);
+        
+        // Start timer
+        this.timerStarted = true;
     }
-    moveBasket(e) {
-        if (gameState.gamePhase !== 'playing')
-            return;
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        this.basket.x = Math.max(0, Math.min(720, mouseX - this.basket.width / 2));
-    }
-    update() {
-        this.spawnTimer++;
-        if (this.spawnTimer > 60) {
-            this.spawnTimer = 0;
-            const isGood = Math.random() > 0.4;
-            const items = isGood ? this.goodItems : this.badItems;
-            this.fallingItems.push({
-                x: Math.random() * 750,
-                y: -20,
-                type: isGood ? 'good' : 'bad',
-                speed: 2 + Math.random() * 2,
-                emoji: items[Math.floor(Math.random() * items.length)]
+    
+    initializeObstacles() {
+        // Place ice patches along the ground at intervals
+        // More ice patches spread throughout the level
+        for (let i = 0; i < 8; i++) {
+            this.icePatches.push({
+                x: 800 + i * 600,
+                y: this.groundY + this.player.normalHeight - 20,
+                width: 90,
+                height: 20
             });
         }
-        // Update falling items
-        for (let i = this.fallingItems.length - 1; i >= 0; i--) {
-            const item = this.fallingItems[i];
-            item.y += item.speed;
-            // Check collision with basket
-            if (item.y + 20 > this.basket.y &&
-                item.x > this.basket.x &&
-                item.x < this.basket.x + this.basket.width) {
-                if (item.type === 'good') {
-                    this.score++;
-                    if (this.score >= this.targetScore) {
-                        this.cleanup();
-                        completeLevel();
-                    }
-                }
-                else {
-                    this.score = Math.max(0, this.score - 1);
-                }
-                this.fallingItems.splice(i, 1);
-            }
-            // Remove if off screen
-            else if (item.y > 600) {
-                this.fallingItems.splice(i, 1);
+    }
+    
+    handleKeyDown(e) {
+        if (gameState.gamePhase !== 'playing') return;
+        
+        if (e.key === 'ArrowLeft') {
+            this.keys.left = true;
+        }
+        if (e.key === 'ArrowRight') {
+            this.keys.right = true;
+        }
+        if (e.key === 'ArrowUp' && this.player.onGround && !this.player.isDucking) {
+            this.keys.up = true;
+            this.player.vy = this.jumpPower;
+            this.player.onGround = false;
+            this.player.isJumping = true;
+        }
+        if (e.key === 'ArrowDown' && this.player.onGround) {
+            this.keys.down = true;
+            this.player.isDucking = true;
+            this.player.height = this.player.duckHeight;
+            this.player.y = this.groundY + this.player.normalHeight - this.player.duckHeight;
+        }
+    }
+    
+    handleKeyUp(e) {
+        if (gameState.gamePhase !== 'playing') return;
+        
+        if (e.key === 'ArrowLeft') {
+            this.keys.left = false;
+        }
+        if (e.key === 'ArrowRight') {
+            this.keys.right = false;
+        }
+        if (e.key === 'ArrowUp') {
+            this.keys.up = false;
+        }
+        if (e.key === 'ArrowDown') {
+            this.keys.down = false;
+            if (this.player.isDucking && this.player.onGround) {
+                this.player.isDucking = false;
+                this.player.height = this.player.normalHeight;
+                this.player.y = this.groundY;
             }
         }
     }
+    
+    update() {
+        // Update timer
+        if (this.timerStarted) {
+            this.levelTimer--;
+            if (this.levelTimer <= 0) {
+                this.levelTimer = 0;
+                this.cleanup();
+                completeLevel();
+                return;
+            }
+        }
+        
+        // Update player speed based on input
+        if (this.keys.right) {
+            this.player.vx = this.player.fastSpeed;
+        } else if (this.keys.left) {
+            this.player.vx = this.player.slowSpeed;
+        } else {
+            this.player.vx = this.player.normalSpeed;
+        }
+        
+        // Move player forward
+        this.player.x += this.player.vx;
+        
+        // Apply gravity
+        if (!this.player.onGround) {
+            this.player.vy += this.gravity;
+            this.player.y += this.player.vy;
+            
+            // Check ground collision
+            if (this.player.y >= this.groundY) {
+                this.player.y = this.groundY;
+                this.player.vy = 0;
+                this.player.onGround = true;
+                this.player.isJumping = false;
+            }
+        }
+        
+        // Spawn falling branches
+        this.branchSpawnTimer++;
+        if (this.branchSpawnTimer > this.branchSpawnInterval) {
+            this.branchSpawnTimer = 0;
+            this.branchSpawnInterval = 180 + Math.random() * 150; // Randomize next spawn
+            
+            this.fallingBranches.push({
+                x: this.player.x + 200 + Math.random() * 400, // Spawn closer to player, more centered
+                y: -80,
+                width: 60,
+                height: 120,
+                speed: 3
+            });
+        }
+        
+        // Update falling branches
+        for (let i = this.fallingBranches.length - 1; i >= 0; i--) {
+            const branch = this.fallingBranches[i];
+            branch.y += branch.speed;
+            
+            // Check collision with player (smaller hitbox with padding)
+            const branchPadding = 15;
+            if (this.checkCollision(
+                this.player.x + 10, this.player.y + 10, this.player.width - 20, this.player.height - 20,
+                branch.x + branchPadding, branch.y + branchPadding, 
+                branch.width - branchPadding * 2, branch.height - branchPadding * 2
+            )) {
+                this.restartLevel();
+                return;
+            }
+            
+            // Remove if off screen
+            if (branch.y > 600 || branch.x < this.player.x - 200) {
+                this.fallingBranches.splice(i, 1);
+            }
+        }
+        
+        // Check ice patch collisions (smaller hitbox with padding)
+        const icePadding = 15;
+        for (const ice of this.icePatches) {
+            if (this.checkCollision(
+                this.player.x + 10, this.player.y + 10, this.player.width - 20, this.player.height - 20,
+                ice.x + icePadding, ice.y, 
+                ice.width - icePadding * 2, ice.height
+            )) {
+                this.restartLevel();
+                return;
+            }
+        }
+    }
+    
+    checkCollision(x1, y1, w1, h1, x2, y2, w2, h2) {
+        return x1 < x2 + w2 &&
+               x1 + w1 > x2 &&
+               y1 < y2 + h2 &&
+               y1 + h1 > y2;
+    }
+    
+    restartLevel() {
+        // Reset player position
+        this.player.x = 150;
+        this.player.y = this.groundY;
+        this.player.vy = 0;
+        this.player.onGround = true;
+        this.player.isDucking = false;
+        this.player.isJumping = false;
+        this.player.height = this.player.normalHeight;
+        
+        // Reset timer
+        this.levelTimer = 1800;
+        this.timerStarted = true;
+        
+        // Clear and reinitialize obstacles
+        this.fallingBranches = [];
+        this.icePatches = [];
+        this.initializeObstacles();
+        
+        // Reset spawn timer
+        this.branchSpawnTimer = 0;
+        this.branchSpawnInterval = 200;
+    }
+    
     draw() {
-        ctx.fillStyle = '#c7e6ff';
-        ctx.fillRect(0, 0, 800, 600);
-        // Title
-        ctx.fillStyle = '#2d4563';
+        // Camera offset - follow player but keep them centered-ish
+        const cameraX = this.player.x - 200;
+        
+        // Scrolling background - frozen forest image that repeats
+        if (frozenForestLoaded) {
+            ctx.imageSmoothingEnabled = false;
+            
+            // Scale background to fit canvas height
+            const scale = canvas.height / frozenForestImage.height;
+            const scaledWidth = frozenForestImage.width * scale;
+            const scaledHeight = canvas.height;
+            
+            // Calculate scroll position (slower than player movement for parallax effect)
+            const bgScrollX = -(cameraX * 0.5) % scaledWidth;
+            
+            // Draw background twice to create seamless scrolling
+            ctx.drawImage(frozenForestImage, bgScrollX, 0, scaledWidth, scaledHeight);
+            ctx.drawImage(frozenForestImage, bgScrollX + scaledWidth, 0, scaledWidth, scaledHeight);
+            
+            // Draw a third instance if needed to cover the canvas
+            if (bgScrollX + scaledWidth * 2 < canvas.width) {
+                ctx.drawImage(frozenForestImage, bgScrollX + scaledWidth * 2, 0, scaledWidth, scaledHeight);
+            }
+        }
+        else {
+            // Fallback if image not loaded
+            ctx.fillStyle = '#d4e9f7';
+            ctx.fillRect(0, 0, 800, 600);
+        }
+        
+        // Title with background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        const bgX = 250;
+        const bgY = 10;
+        const bgWidth = 300;
+        const bgHeight = 75;
+        const borderRadius = 24;
+        
+        ctx.beginPath();
+        ctx.moveTo(bgX + borderRadius, bgY);
+        ctx.lineTo(bgX + bgWidth - borderRadius, bgY);
+        ctx.arcTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + borderRadius, borderRadius);
+        ctx.lineTo(bgX + bgWidth, bgY + bgHeight - borderRadius);
+        ctx.arcTo(bgX + bgWidth, bgY + bgHeight, bgX + bgWidth - borderRadius, bgY + bgHeight, borderRadius);
+        ctx.lineTo(bgX + borderRadius, bgY + bgHeight);
+        ctx.arcTo(bgX, bgY + bgHeight, bgX, bgY + bgHeight - borderRadius, borderRadius);
+        ctx.lineTo(bgX, bgY + borderRadius);
+        ctx.arcTo(bgX, bgY, bgX + borderRadius, bgY, borderRadius);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.fillStyle = '#ffffff';
         ctx.font = '20px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('Orchard of Oddities', 400, 40);
+        ctx.fillText('Frozen Forest', 400, 40);
         ctx.font = '12px "Press Start 2P"';
-        ctx.fillText(`Caught: ${this.score}/${this.targetScore}`, 400, 70);
-        // Trees (background)
-        for (let i = 0; i < 5; i++) {
-            ctx.fillStyle = '#4ade80';
-            ctx.fillRect(i * 180 + 20, 400, 40, 120);
-            ctx.fillStyle = '#22c55e';
-            ctx.beginPath();
-            ctx.arc(i * 180 + 40, 380, 50, 0, Math.PI * 2);
-            ctx.fill();
+        const timeLeft = Math.ceil(this.levelTimer / 60);
+        ctx.fillText(`Time: ${timeLeft}s`, 400, 70);
+        
+        // Draw ice patches (in world space, adjusted by camera)
+        ctx.imageSmoothingEnabled = false;
+        for (const ice of this.icePatches) {
+            const screenX = ice.x - cameraX;
+            if (screenX > -150 && screenX < 900) {
+                if (icePatchLoaded) {
+                    ctx.drawImage(icePatchImage, screenX, ice.y, ice.width, ice.height);
+                } else {
+                    // Fallback
+                    ctx.fillStyle = '#6dd5ed';
+                    ctx.fillRect(screenX, ice.y, ice.width, ice.height);
+                    ctx.fillStyle = '#a8e6f7';
+                    ctx.fillRect(screenX + 8, ice.y + 4, ice.width - 16, 6);
+                }
+            }
         }
-        // Basket
-        ctx.fillStyle = '#a0522d';
-        ctx.fillRect(this.basket.x, this.basket.y, this.basket.width, this.basket.height);
-        ctx.fillStyle = '#8b4513';
-        for (let i = 0; i < 4; i++) {
-            ctx.fillRect(this.basket.x + i * 20, this.basket.y, 3, this.basket.height);
+        
+        // Draw player sprite (in world space, adjusted by camera)
+        ctx.imageSmoothingEnabled = false;
+        const playerScreenX = this.player.x - cameraX;
+        if (this.playerSpriteLoaded) {
+            // Draw the user's selected sprite composite
+            ctx.drawImage(this.playerSprite, playerScreenX, this.player.y, this.player.width, this.player.height);
+        } else {
+            // Fallback rectangle if sprite not loaded
+            if (this.player.isDucking) {
+                ctx.fillStyle = '#ff6b6b';
+            } else if (this.player.isJumping) {
+                ctx.fillStyle = '#4ecdc4';
+            } else {
+                ctx.fillStyle = '#8b7aa8';
+            }
+            ctx.fillRect(playerScreenX, this.player.y, this.player.width, this.player.height);
+            
+            // Player details (simple face)
+            ctx.fillStyle = '#2d3748';
+            ctx.fillRect(playerScreenX + 30, this.player.y + 45, 18, 18); // Eye
+            ctx.fillRect(playerScreenX + 72, this.player.y + 45, 18, 18); // Eye
         }
-        // Falling items
-        this.fallingItems.forEach(item => {
-            ctx.font = '32px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(item.emoji, item.x, item.y);
-        });
+        
+        // Draw falling branches (in world space, adjusted by camera)
+        ctx.imageSmoothingEnabled = false;
+        for (const branch of this.fallingBranches) {
+            const screenX = branch.x - cameraX;
+            if (screenX > -100 && screenX < 900) {
+                if (treeBranchLoaded) {
+                    ctx.drawImage(treeBranchImage, screenX, branch.y, branch.width, branch.height);
+                } else {
+                    // Fallback
+                    ctx.fillStyle = '#4a7a98';
+                    ctx.fillRect(screenX + 20, branch.y, 15, branch.height);
+                    ctx.fillRect(screenX, branch.y + 30, 30, 9);
+                    ctx.fillRect(screenX + 30, branch.y + 60, 30, 9);
+                }
+            }
+        }
+        
+        // Controls hint (top left corner)
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.font = '10px "Press Start 2P"';
+        ctx.textAlign = 'left';
+        ctx.fillText('← Slow  → Fast  ↑ Jump', 10, 100);
     }
+    
     cleanup() {
-        canvas.removeEventListener('mousemove', this.moveBasket.bind(this));
+        window.removeEventListener('keydown', this.keyDownHandler);
+        window.removeEventListener('keyup', this.keyUpHandler);
     }
 }
 // ===================
@@ -1271,7 +1581,7 @@ function startLevel(levelIndex) {
     }
     const levelIntros = [
         ["Welcome, brave traveler, to Jollygut Hollow!", "I cannot guide you until I have regained my strength. These lands have drained me. Bring me fuel—sweet, juicy fuel..."],
-        ["You have reached the Orchard of Oddities!", "Catch the winter items (stars, snowflakes, trees) but avoid the summer ones!"],
+        ["You have entered the Frozen Forest!", "Navigate through this treacherous woodland for 30 seconds.", "Use Arrow Keys: ← to slow down, → to speed up, ↑ to jump.", "Avoid falling branches and jump over ice patches!", "Survive for 30 seconds to complete this trial."],
         ["Behold, the Mirror Meadow!", "Click and drag the mirrors to reflect the light beam to the red target."],
         ["The Cipher Stones await your wisdom!", "Select all the solid glyphs and avoid the hollow ones."],
         ["The final trial: the Sky Bridge!", "Step on the floating tiles in ascending order, from 1 to 7."]
@@ -1283,7 +1593,7 @@ function startLevel(levelIndex) {
                 currentLevelInstance = new PaperWastelandLevel();
                 break;
             case 1:
-                currentLevelInstance = new OrchardLevel();
+                currentLevelInstance = new FrozenForestLevel();
                 break;
             case 2:
                 currentLevelInstance = new MirrorMeadowLevel();
