@@ -32,24 +32,13 @@
                         </div>
 
                         <!-- Hat Carousel -->
-                        <div class="carousel-item carousel-group-start">
+                        <div class="carousel-item">
                             <div class="carousel-controls">
                                 <button class="carousel-btn carousel-prev" data-carousel="hat"></button>
                                 <div class="carousel-display">
-                                    <img id="hat-display" src="hat-blue.png" alt="Hat" class="carousel-image">
+                                    <img id="hat-display" src="hat-normal.png" alt="Hat" class="carousel-image">
                                 </div>
                                 <button class="carousel-btn carousel-next" data-carousel="hat"></button>
-                            </div>
-                        </div>
-
-                        <!-- Scarf Carousel -->
-                        <div class="carousel-item carousel-group-end">
-                            <div class="carousel-controls">
-                                <button class="carousel-btn carousel-prev" data-carousel="scarf"></button>
-                                <div class="carousel-display">
-                                    <img id="scarf-display" src="scarf-blue.png" alt="Scarf" class="carousel-image">
-                                </div>
-                                <button class="carousel-btn carousel-next" data-carousel="scarf"></button>
                             </div>
                         </div>
 
@@ -70,10 +59,7 @@
                     <div class="customization-preview">
                         <div class="preview-container">
                             <div id="layered-preview" class="layered-preview">
-                                <img id="preview-character" src="yeti.png" alt="Character" class="preview-layer">
-                                <img id="preview-hat" src="hat-blue.png" alt="Hat" class="preview-layer">
-                                <img id="preview-scarf" src="scarf-blue.png" alt="Scarf" class="preview-layer">
-                                <img id="preview-transport" src="sled.png" alt="Transport" class="preview-layer">
+                                <img id="preview-composite" src="yeti-hat-normal-sled.png" alt="Sprite Preview" class="preview-composite">
                             </div>
                         </div>
                         <button id="next-to-name-button" class="next-button">Next</button>
@@ -87,17 +73,14 @@
                 
                 <div class="selected-sprite-display">
                     <div class="layered-preview">
-                        <img id="name-preview-character" src="yeti.png" alt="Character" class="preview-layer">
-                        <img id="name-preview-hat" src="hat-blue.png" alt="Hat" class="preview-layer">
-                        <img id="name-preview-scarf" src="scarf-blue.png" alt="Scarf" class="preview-layer">
-                        <img id="name-preview-transport" src="sled.png" alt="Transport" class="preview-layer">
+                        <img id="name-preview-composite" src="yeti-hat-normal-sled.png" alt="Sprite Preview" class="preview-composite">
                     </div>
                 </div>
                 
                 <input type="text" id="player-name-input" class="player-name-input" placeholder="input name..." maxlength="20">
                 
                 <div class="name-screen-buttons">
-                    <button id="back-to-sprite-button" class="back-button pixel-button">Back</button>
+                    <button id="back-to-sprite-button" class="back-button">Back</button>
                     <button id="confirm-name-button" class="confirm-button">Confirm</button>
                 </div>
             </div>
@@ -115,8 +98,8 @@
             <div class="rune-title">Runes of Winter</div>
             <div id="rune-collection" class="rune-collection"></div>
         </div>
-        <button id="restart-button" class="restart-button pixel-button">Start Over</button>
-        <button id="music-toggle-button" class="music-toggle-button pixel-button">🔊</button>
+        <button id="restart-button" class="restart-button">Start Over</button>
+        <button id="music-toggle-button" class="music-toggle-button"></button>
         <div id="final-gate" class="final-gate hidden">
             <div class="gate-content">
                 <h2>The Winter Gate Awaits</h2>

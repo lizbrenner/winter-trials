@@ -6,8 +6,7 @@ const gameState = {
     gamePhase: 'intro',
     playerName: '',
     selectedCharacter: 'yeti',
-    selectedHat: 'hat-blue',
-    selectedScarf: 'scarf-blue',
+    selectedHat: 'hat-normal',
     selectedTransport: 'sled'
 };
 // Canvas setup
@@ -124,7 +123,11 @@ function toggleMusicMute() {
     isMuted = !isMuted;
     backgroundMusic.muted = isMuted;
     const musicButton = document.getElementById('music-toggle-button');
-    musicButton.textContent = isMuted ? '🔇' : '🔊';
+    if (isMuted) {
+        musicButton.classList.add('muted');
+    } else {
+        musicButton.classList.remove('muted');
+    }
 }
 // Hippo Character Drawing
 function drawHippoCharacter(x, y, scale = 1) {
@@ -277,22 +280,34 @@ function drawDialogueScreen() {
         return;
     }
     // Fill the entire canvas with the selected image
-    const canvasAspect = canvas.width / canvas.height;
-    const imageAspect = backgroundImage.width / backgroundImage.height;
     let drawWidth, drawHeight, offsetX, offsetY;
-    if (imageAspect > canvasAspect) {
-        // Image is wider - fit to height
-        drawHeight = canvas.height;
-        drawWidth = backgroundImage.width * (canvas.height / backgroundImage.height);
-        offsetX = (canvas.width - drawWidth) / 2;
-        offsetY = 0;
-    }
-    else {
-        // Image is taller - fit to width
-        drawWidth = canvas.width;
-        drawHeight = backgroundImage.height * (canvas.width / backgroundImage.width);
+    
+    // For rune background, always stretch to fill full canvas (cover mode)
+    if (showRuneDisplay !== false) {
+        // Stretch to fill entire canvas - full width and height
+        drawWidth = canvas.width;   // 800px
+        drawHeight = canvas.height; // 600px
         offsetX = 0;
-        offsetY = (canvas.height - drawHeight) / 2;
+        offsetY = 0;
+    } else {
+        // For other backgrounds, maintain aspect ratio
+        const canvasAspect = canvas.width / canvas.height;
+        const imageAspect = backgroundImage.width / backgroundImage.height;
+        
+        if (imageAspect > canvasAspect) {
+            // Image is wider - fit to height
+            drawHeight = canvas.height;
+            drawWidth = backgroundImage.width * (canvas.height / backgroundImage.height);
+            offsetX = (canvas.width - drawWidth) / 2;
+            offsetY = 0;
+        }
+        else {
+            // Image is taller - fit to width
+            drawWidth = canvas.width;
+            drawHeight = backgroundImage.height * (canvas.width / backgroundImage.width);
+            offsetX = 0;
+            offsetY = (canvas.height - drawHeight) / 2;
+        }
     }
     ctx.drawImage(backgroundImage, offsetX, offsetY, drawWidth, drawHeight);
     
@@ -660,8 +675,29 @@ class PaperWastelandLevel {
             ctx.fillRect(0, 0, 800, 600);
         }
         
-        // Title
-        ctx.fillStyle = '#2d4563';
+        // Title with semi-transparent background with padding and rounded corners
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        // Draw rounded rectangle (x, y, width, height with 16px padding on sides)
+        const bgX = 234;
+        const bgY = 10;
+        const bgWidth = 332;
+        const bgHeight = 75;
+        const borderRadius = 24;
+        
+        ctx.beginPath();
+        ctx.moveTo(bgX + borderRadius, bgY);
+        ctx.lineTo(bgX + bgWidth - borderRadius, bgY);
+        ctx.arcTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + borderRadius, borderRadius);
+        ctx.lineTo(bgX + bgWidth, bgY + bgHeight - borderRadius);
+        ctx.arcTo(bgX + bgWidth, bgY + bgHeight, bgX + bgWidth - borderRadius, bgY + bgHeight, borderRadius);
+        ctx.lineTo(bgX + borderRadius, bgY + bgHeight);
+        ctx.arcTo(bgX, bgY + bgHeight, bgX, bgY + bgHeight - borderRadius, borderRadius);
+        ctx.lineTo(bgX, bgY + borderRadius);
+        ctx.arcTo(bgX, bgY, bgX + borderRadius, bgY, borderRadius);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.fillStyle = '#ffffff';
         ctx.font = '20px "Press Start 2P"';
         ctx.textAlign = 'center';
         ctx.fillText('Jollygut Hollow', 400, 40);
@@ -1313,16 +1349,11 @@ function gameLoop() {
 function updateUIVisibility() {
     const restartButton = document.getElementById('restart-button');
     const runeDisplay = document.getElementById('rune-display');
-    if (gameState.gamePhase === 'intro' || gameState.gamePhase === 'customization') {
-        // Hide everything on home screen and customization screen
-        restartButton.classList.add('hidden');
-        runeDisplay.classList.add('hidden');
-    }
-    else {
-        // Show restart button during gameplay, but keep rune display hidden
-        restartButton.classList.remove('hidden');
-        runeDisplay.classList.add('hidden');
-    }
+    // Always show restart button on every page
+    restartButton.classList.remove('hidden');
+    
+    // Always hide rune display (it's shown separately when needed)
+    runeDisplay.classList.add('hidden');
 }
 // Restart game function
 function restartGame() {
@@ -1351,10 +1382,9 @@ function restartGame() {
 }
 // Update layered preview
 function updateLayeredPreview() {
-    document.getElementById('preview-character').src = `${gameState.selectedCharacter}.png`;
-    document.getElementById('preview-hat').src = `${gameState.selectedHat}.png`;
-    document.getElementById('preview-scarf').src = `${gameState.selectedScarf}.png`;
-    document.getElementById('preview-transport').src = `${gameState.selectedTransport}.png`;
+    // Construct composite image filename: character-hat-transport.png
+    const compositeFilename = `${gameState.selectedCharacter}-${gameState.selectedHat}-${gameState.selectedTransport}.png`;
+    document.getElementById('preview-composite').src = compositeFilename;
 }
 // Show customization screen
 function showCustomizationScreen() {
@@ -1372,11 +1402,9 @@ function showNameInputScreen() {
     const nameInputScreen = document.getElementById('name-input-screen');
     customizationScreen.classList.add('hidden');
     nameInputScreen.classList.remove('hidden');
-    // Update the layered preview on name screen
-    document.getElementById('name-preview-character').src = `${gameState.selectedCharacter}.png`;
-    document.getElementById('name-preview-hat').src = `${gameState.selectedHat}.png`;
-    document.getElementById('name-preview-scarf').src = `${gameState.selectedScarf}.png`;
-    document.getElementById('name-preview-transport').src = `${gameState.selectedTransport}.png`;
+    // Update the composite preview on name screen
+    const compositeFilename = `${gameState.selectedCharacter}-${gameState.selectedHat}-${gameState.selectedTransport}.png`;
+    document.getElementById('name-preview-composite').src = compositeFilename;
 }
 // Go back to sprite selection
 function backToSpriteSelection() {
@@ -1389,16 +1417,14 @@ function backToSpriteSelection() {
 function setupCustomization() {
     // Carousel options
     const carouselOptions = {
-        character: ['yeti', 'penguin', 'polarbear'],
-        hat: ['hat-blue', 'hat-red', 'hat-brown'],
-        scarf: ['scarf-blue', 'scarf-red', 'scarf-brown'],
+        character: ['yeti', 'penguin', 'bear'],
+        hat: ['hat-normal', 'hat-viking', 'hat-plaid'],
         transport: ['sled', 'reindeer', 'snowboard']
     };
     
     const carouselIndices = {
         character: 0,
         hat: 0,
-        scarf: 0,
         transport: 0
     };
     
@@ -1415,7 +1441,6 @@ function setupCustomization() {
         // Update game state
         if (type === 'character') gameState.selectedCharacter = item;
         else if (type === 'hat') gameState.selectedHat = item;
-        else if (type === 'scarf') gameState.selectedScarf = item;
         else if (type === 'transport') gameState.selectedTransport = item;
         
         // Update layered preview
@@ -1472,7 +1497,7 @@ function startGameIntro() {
     gameState.gamePhase = 'dialogue';
     currentDialogueBackground = 'intro'; // Use hippo-hero background
     updateUIVisibility();
-    const greeting = gameState.playerName ? `Greetings, ${gameState.playerName}! I am the Winter Spirit.` : "Greetings, traveler! I am the Winter Spirit.";
+    const greeting = gameState.playerName ? `Greetings, ${gameState.playerName}! I am Frostwaddle, the winter spirit.` : "Greetings, traveler! I am Frostwaddle, the winter spirit.";
     showDialogue([
         greeting,
         "The land is frozen in eternal winter and I have lost my companion in the midst of the winter storm.",
