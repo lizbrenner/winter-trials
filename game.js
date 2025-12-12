@@ -260,10 +260,34 @@ function drawDialogueScreen() {
     let backgroundImage;
     let imageLoaded;
     
-    // If showing rune display, use rune background for all levels
-    if (showRuneDisplay !== false && runeBackgroundLoaded) {
-        backgroundImage = runeBackgroundImage;
-        imageLoaded = runeBackgroundLoaded;
+    // If showing rune display, use the specific rune image as background
+    if (showRuneDisplay !== false) {
+        // Use the specific rune image for each level as the background
+        switch(showRuneDisplay) {
+            case 0: // Level 1 - Jollygut Hollow
+                backgroundImage = runeOImage;
+                imageLoaded = runeOLoaded;
+                break;
+            case 1: // Level 2 - Orchard of Oddities
+                backgroundImage = runeGImage;
+                imageLoaded = runeGLoaded;
+                break;
+            case 2: // Level 3 - Mirror Meadow
+                backgroundImage = runeMImage;
+                imageLoaded = runeMLoaded;
+                break;
+            case 3: // Level 4 - Cipher Stones
+                backgroundImage = runeNImage;
+                imageLoaded = runeNLoaded;
+                break;
+            case 4: // Level 5 - Sky Bridge
+                backgroundImage = runeAImage;
+                imageLoaded = runeALoaded;
+                break;
+            default:
+                backgroundImage = runeBackgroundImage;
+                imageLoaded = runeBackgroundLoaded;
+        }
     }
     else if (currentDialogueBackground === 'level1' && watermelonWastelandLoaded) {
         backgroundImage = watermelonWastelandImage;
@@ -273,7 +297,8 @@ function drawDialogueScreen() {
         backgroundImage = hippoHeroImage;
         imageLoaded = hippoHeroLoaded;
     }
-    else {
+    
+    if (!imageLoaded) {
         // Fallback background while image loads
         ctx.fillStyle = '#2d4563';
         ctx.fillRect(0, 0, 800, 600);
@@ -310,63 +335,6 @@ function drawDialogueScreen() {
         }
     }
     ctx.drawImage(backgroundImage, offsetX, offsetY, drawWidth, drawHeight);
-    
-    // If showing rune display, draw the appropriate rune image prominently in center
-    if (showRuneDisplay !== false) {
-        // Determine which rune image to use based on level
-        let currentRuneImage = null;
-        let currentRuneLoaded = false;
-        
-        switch(showRuneDisplay) {
-            case 0: // Level 1 - Jollygut Hollow
-                currentRuneImage = runeOImage;
-                currentRuneLoaded = runeOLoaded;
-                break;
-            case 1: // Level 2 - Orchard of Oddities
-                currentRuneImage = runeGImage;
-                currentRuneLoaded = runeGLoaded;
-                break;
-            case 2: // Level 3 - Mirror Meadow
-                currentRuneImage = runeMImage;
-                currentRuneLoaded = runeMLoaded;
-                break;
-            case 3: // Level 4 - Cipher Stones
-                currentRuneImage = runeNImage;
-                currentRuneLoaded = runeNLoaded;
-                break;
-            case 4: // Level 5 - Sky Bridge
-                currentRuneImage = runeAImage;
-                currentRuneLoaded = runeALoaded;
-                break;
-        }
-        
-        if (currentRuneImage && currentRuneLoaded) {
-            // Make the rune large and prominent like in the example
-            // Dialogue box is about 200px at bottom, so we have ~400px of space
-            const availableHeight = 400;
-            const maxRuneSize = 350;
-            
-            // Calculate scaled dimensions while maintaining aspect ratio
-            const runeAspect = currentRuneImage.width / currentRuneImage.height;
-            let runeWidth, runeHeight;
-            
-            if (runeAspect > 1) {
-                // Wider than tall
-                runeWidth = Math.min(maxRuneSize, currentRuneImage.width);
-                runeHeight = runeWidth / runeAspect;
-            } else {
-                // Taller than wide or square
-                runeHeight = Math.min(maxRuneSize, currentRuneImage.height);
-                runeWidth = runeHeight * runeAspect;
-            }
-            
-            // Center the rune both horizontally and vertically in the available space above dialogue
-            const runeX = (canvas.width - runeWidth) / 2;
-            const runeY = (availableHeight - runeHeight) / 2 + 50; // +50 to push down slightly from top
-            
-            ctx.drawImage(currentRuneImage, runeX, runeY, runeWidth, runeHeight);
-        }
-    }
 }
 // Dialogue system
 const dialogueBox = document.getElementById('dialogue-box');
