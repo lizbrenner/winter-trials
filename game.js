@@ -1251,174 +1251,451 @@ class FrozenForestLevel {
     }
 }
 // ===================
-// LEVEL 3: Mirror Meadow
+// LEVEL 3: The Ice Field of Trial
 // ===================
-class MirrorMeadowLevel {
+class IceFieldLevel {
     constructor() {
-        this.lightSource = { x: 50, y: 50 };
-        this.target = { x: 700, y: 500, width: 60, height: 60 };
-        this.mirrors = [
-            { x: 200, y: 200, angle: 45, width: 60, height: 10 },
-            { x: 400, y: 350, angle: 135, width: 60, height: 10 },
-            { x: 600, y: 200, angle: 45, width: 60, height: 10 }
-        ];
-        this.selectedMirror = null;
-        this.lightPath = [];
-        canvas.addEventListener('mousedown', this.selectMirror.bind(this));
-        canvas.addEventListener('mousemove', this.rotateMirror.bind(this));
+        // Grid configuration
+        this.gridCols = 10;
+        this.gridRows = 6;
+        this.blockSize = 60;
+        this.gridStartX = 100;
+        this.gridStartY = 150;
+        
+        // Player position (grid coordinates)
+        this.playerGridX = 0;
+        this.playerGridY = Math.floor(this.gridRows / 2);
+        
+        // Goal position (reach rightmost column)
+        this.goalColumn = this.gridCols - 1;
+        
+        // Create ice grid
+        this.iceBlocks = [];
+        this.initializeGrid();
+        
+        // Select 3-5 random blocks to be unstable, ensuring level is solvable
+        this.unstableBlocks = [];
+        this.selectUnstableBlocks();
+        
+        // Warning phase
+        this.warningPhase = true;
+        this.warningTimer = 120; // 2 seconds at 60fps
+        this.warningShakeOffset = 0;
+        
+        // Animation states
+        this.crackingBlock = null; // Block that's currently cracking
+        this.crackAnimationFrame = 0;
+        this.playerFalling = false;
+        this.fallingAnimationFrame = 0;
+        
+        // Movement
+        this.canMove = false; // Can't move during warning phase
+        this.moveDelay = 0;
+        
+        // Bind event handlers
+        this.keyDownHandler = this.handleKeyDown.bind(this);
+        window.addEventListener('keydown', this.keyDownHandler);
     }
-    selectMirror(e) {
-        if (gameState.gamePhase !== 'playing')
-            return;
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        this.selectedMirror = null;
-        this.mirrors.forEach((mirror, i) => {
-            const dx = mouseX - mirror.x;
-            const dy = mouseY - mirror.y;
-            if (Math.sqrt(dx * dx + dy * dy) < 40) {
-                this.selectedMirror = i;
+    
+    initializeGrid() {
+        // Create all ice blocks
+        for (let row = 0; row < this.gridRows; row++) {
+            for (let col = 0; col < this.gridCols; col++) {
+                this.iceBlocks.push({
+                    col: col,
+                    row: row,
+                    x: this.gridStartX + col * this.blockSize,
+                    y: this.gridStartY + row * this.blockSize,
+                    stable: true, // Will be set to false for unstable blocks
+                    broken: false
+                });
             }
-        });
+        }
     }
-    rotateMirror(e) {
-        if (this.selectedMirror === null || gameState.gamePhase !== 'playing')
-            return;
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        const mirror = this.mirrors[this.selectedMirror];
-        const angle = Math.atan2(mouseY - mirror.y, mouseX - mirror.x) * 180 / Math.PI;
-        mirror.angle = angle;
+    
+    getBlockAt(col, row) {
+        return this.iceBlocks.find(b => b.col === col && b.row === row);
     }
-    update() {
-        this.calculateLightPath();
-    }
-    calculateLightPath() {
-        this.lightPath = [{ x: this.lightSource.x, y: this.lightSource.y }];
-        let currentAngle = 45; // Initial light direction
-        let currentPos = { x: this.lightSource.x, y: this.lightSource.y };
-        for (let bounce = 0; bounce < 10; bounce++) {
-            // Trace ray
-            const ray = this.traceRay(currentPos, currentAngle);
-            if (!ray)
-                break;
-            this.lightPath.push({ x: ray.x, y: ray.y });
-            if (ray.hitTarget) {
-                this.cleanup();
-                completeLevel();
-                break;
+    
+    selectUnstableBlocks() {
+        // Select 3-5 blocks to be unstable
+        const numUnstable = 3 + Math.floor(Math.random() * 3);
+        
+        // Try up to 100 times to find a valid configuration
+        for (let attempt = 0; attempt < 100; attempt++) {
+            const candidates = [];
+            
+            // Don't place unstable blocks on start position or goal column
+            for (let i = 0; i < numUnstable; i++) {
+                const col = 1 + Math.floor(Math.random() * (this.gridCols - 2));
+                const row = Math.floor(Math.random() * this.gridRows);
+                
+                // Don't select start position
+                if (col === 0 && row === this.playerGridY) continue;
+                
+                candidates.push({ col, row });
             }
-            if (ray.hitMirror !== null) {
-                const mirror = this.mirrors[ray.hitMirror];
-                // Reflect angle
-                currentAngle = 2 * mirror.angle - currentAngle;
-                currentPos = { x: ray.x, y: ray.y };
-            }
-            else {
+            
+            // Check if path exists with these unstable blocks
+            if (this.isPathSolvable(candidates)) {
+                // Mark these blocks as unstable
+                candidates.forEach(pos => {
+                    const block = this.getBlockAt(pos.col, pos.row);
+                    if (block) {
+                        block.stable = false;
+                        this.unstableBlocks.push(block);
+                    }
+                });
                 break;
             }
         }
     }
-    traceRay(start, angle) {
-        const dirX = Math.cos(angle * Math.PI / 180);
-        const dirY = Math.sin(angle * Math.PI / 180);
-        let closestDist = 2000;
-        let closestPoint = null;
-        let hitMirror = null;
-        let hitTarget = false;
-        // Check mirrors
-        this.mirrors.forEach((mirror, i) => {
-            const t = ((mirror.x - start.x) * dirX + (mirror.y - start.y) * dirY);
-            if (t > 0) {
-                const x = start.x + dirX * t;
-                const y = start.y + dirY * t;
-                const dx = x - mirror.x;
-                const dy = y - mirror.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < 30 && t < closestDist) {
-                    closestDist = t;
-                    closestPoint = { x, y };
-                    hitMirror = i;
+    
+    isPathSolvable(unstablePositions) {
+        // Simple BFS pathfinding to check if goal is reachable
+        const queue = [{ col: this.playerGridX, row: this.playerGridY }];
+        const visited = new Set();
+        visited.add(`${this.playerGridX},${this.playerGridY}`);
+        
+        while (queue.length > 0) {
+            const current = queue.shift();
+            
+            // Check if we reached goal column
+            if (current.col === this.goalColumn) {
+                return true;
+            }
+            
+            // Check all 4 directions
+            const directions = [
+                { col: current.col + 1, row: current.row }, // right
+                { col: current.col - 1, row: current.row }, // left
+                { col: current.col, row: current.row + 1 }, // down
+                { col: current.col, row: current.row - 1 }  // up
+            ];
+            
+            for (const next of directions) {
+                if (next.col < 0 || next.col >= this.gridCols || 
+                    next.row < 0 || next.row >= this.gridRows) {
+                    continue;
+                }
+                
+                const key = `${next.col},${next.row}`;
+                if (visited.has(key)) continue;
+                
+                // Check if this block is unstable
+                const isUnstable = unstablePositions.some(
+                    u => u.col === next.col && u.row === next.row
+                );
+                
+                if (!isUnstable) {
+                    visited.add(key);
+                    queue.push(next);
                 }
             }
-        });
-        // Check target
-        const targetCenterX = this.target.x + this.target.width / 2;
-        const targetCenterY = this.target.y + this.target.height / 2;
-        const t = ((targetCenterX - start.x) * dirX + (targetCenterY - start.y) * dirY);
-        if (t > 0 && t < closestDist) {
-            const x = start.x + dirX * t;
-            const y = start.y + dirY * t;
-            if (x > this.target.x && x < this.target.x + this.target.width &&
-                y > this.target.y && y < this.target.y + this.target.height) {
-                closestPoint = { x, y };
-                hitTarget = true;
-                hitMirror = null;
+        }
+        
+        return false;
+    }
+    
+    handleKeyDown(e) {
+        if (!this.canMove || gameState.gamePhase !== 'playing' || this.playerFalling) return;
+        if (this.moveDelay > 0) return;
+        
+        let newX = this.playerGridX;
+        let newY = this.playerGridY;
+        
+        if (e.key === 'ArrowUp') {
+            newY--;
+        } else if (e.key === 'ArrowDown') {
+            newY++;
+        } else if (e.key === 'ArrowLeft') {
+            newX--;
+        } else if (e.key === 'ArrowRight') {
+            newX++;
+        } else {
+            return;
+        }
+        
+        // Check bounds
+        if (newX < 0 || newX >= this.gridCols || newY < 0 || newY >= this.gridRows) {
+            return;
+        }
+        
+        // Move player
+        this.playerGridX = newX;
+        this.playerGridY = newY;
+        this.moveDelay = 10; // Small delay between moves
+        
+        // Check if stepped on unstable block
+        const currentBlock = this.getBlockAt(this.playerGridX, this.playerGridY);
+        if (currentBlock && !currentBlock.stable && !currentBlock.broken) {
+            // Start cracking animation
+            this.crackingBlock = currentBlock;
+            this.crackAnimationFrame = 0;
+            this.playerFalling = true;
+        }
+        
+        // Check win condition - reached goal column
+        if (this.playerGridX === this.goalColumn) {
+            this.cleanup();
+            completeLevel();
+        }
+    }
+    
+    update() {
+        // Warning phase countdown
+        if (this.warningPhase) {
+            this.warningTimer--;
+            this.warningShakeOffset = Math.sin(Date.now() * 0.05) * 3;
+            
+            if (this.warningTimer <= 0) {
+                this.warningPhase = false;
+                this.canMove = true;
+            }
+            return;
+        }
+        
+        // Move delay countdown
+        if (this.moveDelay > 0) {
+            this.moveDelay--;
+        }
+        
+        // Cracking animation
+        if (this.crackingBlock && this.playerFalling) {
+            this.crackAnimationFrame++;
+            
+            // After 30 frames (0.5 seconds), restart level
+            if (this.crackAnimationFrame > 30) {
+                this.restartLevel();
             }
         }
-        // Default to edge of screen
-        if (!closestPoint) {
-            const maxDist = 1000;
-            closestPoint = {
-                x: start.x + dirX * maxDist,
-                y: start.y + dirY * maxDist
-            };
-        }
-        return closestPoint ? { ...closestPoint, hitMirror, hitTarget } : null;
     }
+    
+    restartLevel() {
+        // Reset player position
+        this.playerGridX = 0;
+        this.playerGridY = Math.floor(this.gridRows / 2);
+        
+        // Reset all blocks
+        this.iceBlocks.forEach(block => {
+            block.broken = false;
+        });
+        
+        // Reset animation states
+        this.crackingBlock = null;
+        this.crackAnimationFrame = 0;
+        this.playerFalling = false;
+        
+        // Restart warning phase
+        this.warningPhase = true;
+        this.warningTimer = 120;
+        this.canMove = false;
+    }
+    
     draw() {
-        ctx.fillStyle = '#d4e9f7';
+        // Background - medieval winter landscape
+        ctx.fillStyle = '#b8c9d8';
         ctx.fillRect(0, 0, 800, 600);
-        // Title
-        ctx.fillStyle = '#2d4563';
-        ctx.font = '20px "Press Start 2P"';
+        
+        // Draw darker ground below ice
+        ctx.fillStyle = '#4a5d6d';
+        ctx.fillRect(0, 400, 800, 200);
+        
+        // Title with semi-transparent background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        const bgX = 180;
+        const bgY = 10;
+        const bgWidth = 440;
+        const bgHeight = 95;
+        const borderRadius = 24;
+        
+        ctx.beginPath();
+        ctx.moveTo(bgX + borderRadius, bgY);
+        ctx.lineTo(bgX + bgWidth - borderRadius, bgY);
+        ctx.arcTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + borderRadius, borderRadius);
+        ctx.lineTo(bgX + bgWidth, bgY + bgHeight - borderRadius);
+        ctx.arcTo(bgX + bgWidth, bgY + bgHeight, bgX + bgWidth - borderRadius, bgY + bgHeight, borderRadius);
+        ctx.lineTo(bgX + borderRadius, bgY + bgHeight);
+        ctx.arcTo(bgX, bgY + bgHeight, bgX, bgY + bgHeight - borderRadius, borderRadius);
+        ctx.lineTo(bgX, bgY + borderRadius);
+        ctx.arcTo(bgX, bgY, bgX + borderRadius, bgY, borderRadius);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '18px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('Mirror Meadow', 400, 40);
-        ctx.font = '10px "Press Start 2P"';
-        ctx.fillText('Rotate mirrors to guide light to the target', 400, 70);
-        // Light path
-        if (this.lightPath.length > 1) {
-            ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(this.lightPath[0].x, this.lightPath[0].y);
-            for (let i = 1; i < this.lightPath.length; i++) {
-                ctx.lineTo(this.lightPath[i].x, this.lightPath[i].y);
-            }
-            ctx.stroke();
+        ctx.fillText('The Ice Field of Trial', 400, 35);
+        
+        if (this.warningPhase) {
+            ctx.font = '11px "Press Start 2P"';
+            ctx.fillStyle = '#ffcc00';
+            ctx.fillText('Winter reveals its weakness...', 400, 65);
+            ctx.font = '10px "Press Start 2P"';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('Watch carefully!', 400, 88);
+        } else {
+            ctx.font = '10px "Press Start 2P"';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('Step where the ice remembers its strength', 400, 65);
+            ctx.font = '9px "Press Start 2P"';
+            ctx.fillText('Arrow keys to move', 400, 88);
         }
-        // Light source
-        ctx.fillStyle = '#ffd700';
-        ctx.beginPath();
-        ctx.arc(this.lightSource.x, this.lightSource.y, 20, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.beginPath();
-        ctx.arc(this.lightSource.x, this.lightSource.y, 10, 0, Math.PI * 2);
-        ctx.fill();
-        // Mirrors
-        this.mirrors.forEach((mirror, i) => {
-            ctx.save();
-            ctx.translate(mirror.x, mirror.y);
-            ctx.rotate(mirror.angle * Math.PI / 180);
-            ctx.fillStyle = this.selectedMirror === i ? '#6dd5ed' : '#c0c0c0';
-            ctx.fillRect(-mirror.width / 2, -mirror.height / 2, mirror.width, mirror.height);
-            ctx.strokeStyle = '#808080';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(-mirror.width / 2, -mirror.height / 2, mirror.width, mirror.height);
-            ctx.restore();
+        
+        // Draw ice blocks
+        this.iceBlocks.forEach(block => {
+            let offsetX = 0;
+            let offsetY = 0;
+            
+            // Warning phase effects for unstable blocks
+            if (this.warningPhase && !block.stable) {
+                offsetX = this.warningShakeOffset;
+                offsetY = Math.sin(Date.now() * 0.03 + block.col * 0.5) * 2;
+            }
+            
+            const x = block.x + offsetX;
+            const y = block.y + offsetY;
+            
+            // Don't draw broken blocks
+            if (block.broken) {
+                return;
+            }
+            
+            // Draw block shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(x + 4, y + 4, this.blockSize - 8, this.blockSize - 8);
+            
+            // Determine block appearance
+            if (this.crackingBlock === block && this.playerFalling) {
+                // Breaking animation
+                ctx.fillStyle = '#ff6b6b';
+                ctx.fillRect(x, y, this.blockSize, this.blockSize);
+                
+                // Draw cracks
+                ctx.strokeStyle = '#8b0000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + this.blockSize, y + this.blockSize);
+                ctx.moveTo(x + this.blockSize, y);
+                ctx.lineTo(x, y + this.blockSize);
+                ctx.stroke();
+            } else if (this.warningPhase && !block.stable) {
+                // Unstable block during warning - show cracks
+                ctx.fillStyle = '#c0d8e8';
+                ctx.fillRect(x, y, this.blockSize, this.blockSize);
+                
+                // Ice shine
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.fillRect(x + 8, y + 8, this.blockSize - 16, 10);
+                
+                // Warning cracks (visible during warning phase)
+                ctx.strokeStyle = '#666666';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(x + this.blockSize / 2, y);
+                ctx.lineTo(x + this.blockSize / 2 - 10, y + this.blockSize);
+                ctx.moveTo(x + this.blockSize / 2, y);
+                ctx.lineTo(x + this.blockSize / 2 + 15, y + this.blockSize);
+                ctx.stroke();
+                
+                // Flicker effect
+                if (Math.random() > 0.7) {
+                    ctx.fillStyle = 'rgba(255, 100, 100, 0.2)';
+                    ctx.fillRect(x, y, this.blockSize, this.blockSize);
+                }
+            } else {
+                // Normal stable ice block
+                ctx.fillStyle = '#d8e9f5';
+                ctx.fillRect(x, y, this.blockSize, this.blockSize);
+                
+                // Ice shine
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                ctx.fillRect(x + 8, y + 8, this.blockSize - 16, 12);
+                
+                // Ice edge highlight
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x + 2, y + 2, this.blockSize - 4, this.blockSize - 4);
+            }
+            
+            // Block border
+            ctx.strokeStyle = '#7a9db8';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x, y, this.blockSize, this.blockSize);
         });
-        // Target
-        ctx.fillStyle = '#f87171';
-        ctx.fillRect(this.target.x, this.target.y, this.target.width, this.target.height);
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(this.target.x + 20, this.target.y + 20, 20, 20);
+        
+        // Draw goal indicator (ancient gate/marker on far right)
+        for (let row = 0; row < this.gridRows; row++) {
+            const goalBlock = this.getBlockAt(this.goalColumn, row);
+            if (goalBlock) {
+                ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+                ctx.fillRect(goalBlock.x + 5, goalBlock.y + 5, this.blockSize - 10, this.blockSize - 10);
+                
+                // Ancient rune marker
+                ctx.fillStyle = '#ffd700';
+                ctx.font = '24px "Press Start 2P"';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('✦', goalBlock.x + this.blockSize / 2, goalBlock.y + this.blockSize / 2);
+            }
+        }
+        
+        // Draw player
+        const playerBlock = this.getBlockAt(this.playerGridX, this.playerGridY);
+        if (playerBlock) {
+            let playerY = playerBlock.y + this.blockSize / 2;
+            
+            // Falling animation
+            if (this.playerFalling) {
+                playerY += this.crackAnimationFrame * 2;
+            }
+            
+            // Player sprite (simplified 8-bit character)
+            const playerSize = 40;
+            const playerX = playerBlock.x + this.blockSize / 2;
+            
+            // Shadow
+            if (!this.playerFalling) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.beginPath();
+                ctx.ellipse(playerX, playerBlock.y + this.blockSize - 5, 15, 5, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Body
+            ctx.fillStyle = '#8b7aa8';
+            ctx.fillRect(playerX - 15, playerY - 20, 30, 35);
+            
+            // Head
+            ctx.fillStyle = '#9d8bb8';
+            ctx.fillRect(playerX - 12, playerY - 35, 24, 20);
+            
+            // Eyes
+            ctx.fillStyle = '#2d3748';
+            ctx.fillRect(playerX - 9, playerY - 28, 5, 5);
+            ctx.fillRect(playerX + 4, playerY - 28, 5, 5);
+            
+            // Cape (for medieval feel)
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(playerX - 18, playerY - 18, 6, 25);
+            ctx.fillRect(playerX + 12, playerY - 18, 6, 25);
+        }
+        
+        // Environmental flavor - frozen skeleton (optional)
+        if (!this.warningPhase) {
+            const skeletonBlock = this.getBlockAt(2, 4);
+            if (skeletonBlock && skeletonBlock.stable) {
+                ctx.fillStyle = '#cccccc';
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('☠', skeletonBlock.x + this.blockSize / 2, skeletonBlock.y + this.blockSize / 2);
+            }
+        }
     }
+    
     cleanup() {
-        canvas.removeEventListener('mousedown', this.selectMirror.bind(this));
-        canvas.removeEventListener('mousemove', this.rotateMirror.bind(this));
+        window.removeEventListener('keydown', this.keyDownHandler);
     }
 }
 // ===================
@@ -1624,7 +1901,7 @@ function startLevel(levelIndex) {
     const levelIntros = [
         ["Welcome, brave traveler, to Jollygut Hollow!", "I cannot guide you until I have regained my strength. These lands have drained me. Bring me fuel—sweet, juicy fuel..."],
         ["You have reached the Frozen Forest!", "The journey is quick, but be warned...", "It is covered with treacherous ice patches and falling tree branches, which you must avoid. Use Arrow Keys: ← to slow down, → to speed up, ↑ to jump."],
-        ["Behold, the Mirror Meadow!", "Click and drag the mirrors to reflect the light beam to the red target."],
+        ["The Ice Field of Trial", "Not all ice is sworn to hold.", "Winter reveals its weakness only once.", "Those who rush will not see it.", "Step where the ice remembers its strength."],
         ["The Cipher Stones await your wisdom!", "Select all the solid glyphs and avoid the hollow ones."],
         ["The final trial: the Sky Bridge!", "Step on the floating tiles in ascending order, from 1 to 7."]
     ];
@@ -1638,7 +1915,7 @@ function startLevel(levelIndex) {
                 currentLevelInstance = new FrozenForestLevel();
                 break;
             case 2:
-                currentLevelInstance = new MirrorMeadowLevel();
+                currentLevelInstance = new IceFieldLevel();
                 break;
             case 3:
                 currentLevelInstance = new CipherStonesLevel();
