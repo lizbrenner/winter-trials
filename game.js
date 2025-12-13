@@ -39,6 +39,12 @@ let frozenForestLoaded = false;
 frozenForestImage.onload = () => {
     frozenForestLoaded = true;
 };
+const frozenForestWithHippoImage = new Image();
+frozenForestWithHippoImage.src = 'frozen-forest-background-with-hippo.png';
+let frozenForestWithHippoLoaded = false;
+frozenForestWithHippoImage.onload = () => {
+    frozenForestWithHippoLoaded = true;
+};
 const treeBranchImage = new Image();
 treeBranchImage.src = 'tree-branch.png';
 let treeBranchLoaded = false;
@@ -323,6 +329,10 @@ function drawDialogueScreen() {
         backgroundImage = watermelonWastelandImage;
         imageLoaded = watermelonWastelandLoaded;
     }
+    else if (currentDialogueBackground === 'level2' && frozenForestLoaded) {
+        backgroundImage = frozenForestImage;
+        imageLoaded = frozenForestLoaded;
+    }
     else if (hippoHeroLoaded) {
         backgroundImage = hippoHeroImage;
         imageLoaded = hippoHeroLoaded;
@@ -413,8 +423,7 @@ function completeLevel() {
     showRuneDisplay = gameState.currentLevel;
     
     const levelMessages = [
-        "Well done, brave traveler! You have earned a Rune of Winter.",
-        "The ancient power flows through you. Your journey continues..."
+        "Well done, brave traveler! You have earned a Rune of Winter. The ancient power flows through you. Your journey continues...",
     ];
     showDialogue(levelMessages, () => {
         showRuneDisplay = false; // Reset the rune display flag
@@ -874,12 +883,12 @@ class FrozenForestLevel {
         this.fallingBranches = [];
         this.icePatches = [];
         
-        // Spawn timers
+        // Spawn timers with random initial interval
         this.branchSpawnTimer = 0;
-        this.branchSpawnInterval = 200; // Frames between branch spawns
+        this.branchSpawnInterval = 120 + Math.random() * 230; // Random frames between branch spawns
         
-        // Level timer (30 seconds = 1800 frames at 60fps)
-        this.levelTimer = 1800;
+        // Level timer (20 seconds = 1200 frames at 60fps)
+        this.levelTimer = 1200;
         this.timerStarted = false;
         
         // Input tracking
@@ -905,11 +914,16 @@ class FrozenForestLevel {
     }
     
     initializeObstacles() {
-        // Place ice patches along the ground at intervals
-        // More ice patches spread throughout the level
-        for (let i = 0; i < 8; i++) {
+        // Place ice patches along the ground with random spacing
+        // Randomize number of ice patches between 7-10
+        const numPatches = 7 + Math.floor(Math.random() * 4);
+        let currentX = 700 + Math.random() * 300; // Random starting position
+        
+        for (let i = 0; i < numPatches; i++) {
+            // Add random spacing between 350-850 pixels
+            currentX += 350 + Math.random() * 500;
             this.icePatches.push({
-                x: 800 + i * 600,
+                x: currentX,
                 y: this.groundY + this.player.normalHeight - 20,
                 width: 90,
                 height: 20
@@ -1000,14 +1014,18 @@ class FrozenForestLevel {
             }
         }
         
-        // Spawn falling branches
+        // Spawn falling branches with more randomization
         this.branchSpawnTimer++;
         if (this.branchSpawnTimer > this.branchSpawnInterval) {
             this.branchSpawnTimer = 0;
-            this.branchSpawnInterval = 180 + Math.random() * 150; // Randomize next spawn
+            // More varied spawn intervals: between 120-350 frames
+            this.branchSpawnInterval = 120 + Math.random() * 230;
+            
+            // Find a safe position that's not above an ice patch
+            const safeX = this.findSafeBranchPosition();
             
             this.fallingBranches.push({
-                x: this.player.x + 200 + Math.random() * 400, // Spawn closer to player, more centered
+                x: safeX,
                 y: -80,
                 width: 60,
                 height: 120,
@@ -1058,6 +1076,32 @@ class FrozenForestLevel {
                y1 + h1 > y2;
     }
     
+    isPositionAboveIcePatch(x, branchWidth) {
+        // Check if a branch at position x would fall on any ice patch
+        // Add a buffer zone of 50 pixels on each side for safety
+        const buffer = 50;
+        for (const ice of this.icePatches) {
+            if (x + branchWidth + buffer > ice.x && x - buffer < ice.x + ice.width) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    findSafeBranchPosition() {
+        // Try to find a position that's not above an ice patch
+        // Try up to 10 times before giving up
+        const branchWidth = 60;
+        for (let attempt = 0; attempt < 10; attempt++) {
+            const x = this.player.x + 100 + Math.random() * 600;
+            if (!this.isPositionAboveIcePatch(x, branchWidth)) {
+                return x;
+            }
+        }
+        // If we can't find a safe spot after 10 tries, return a far position
+        return this.player.x + 400;
+    }
+    
     restartLevel() {
         // Reset player position
         this.player.x = 150;
@@ -1069,7 +1113,7 @@ class FrozenForestLevel {
         this.player.height = this.player.normalHeight;
         
         // Reset timer
-        this.levelTimer = 1800;
+        this.levelTimer = 1200;
         this.timerStarted = true;
         
         // Clear and reinitialize obstacles
@@ -1077,9 +1121,10 @@ class FrozenForestLevel {
         this.icePatches = [];
         this.initializeObstacles();
         
-        // Reset spawn timer
+        // Reset spawn timer with randomization
         this.branchSpawnTimer = 0;
-        this.branchSpawnInterval = 200;
+        // Start with a random interval so branches don't always spawn at the same time
+        this.branchSpawnInterval = 120 + Math.random() * 230;
     }
     
     draw() {
@@ -1198,12 +1243,6 @@ class FrozenForestLevel {
                 }
             }
         }
-        
-        // Controls hint (top left corner)
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.font = '10px "Press Start 2P"';
-        ctx.textAlign = 'left';
-        ctx.fillText('← Slow  → Fast  ↑ Jump', 10, 100);
     }
     
     cleanup() {
@@ -1576,12 +1615,15 @@ function startLevel(levelIndex) {
     if (levelIndex === 0) {
         currentDialogueBackground = 'level1'; // Use Jollygut Hollow background
     }
+    else if (levelIndex === 1) {
+        currentDialogueBackground = 'level2'; // Use Frozen Forest with Hippo background
+    }
     else {
         currentDialogueBackground = 'intro'; // Use hippo-hero for other levels
     }
     const levelIntros = [
         ["Welcome, brave traveler, to Jollygut Hollow!", "I cannot guide you until I have regained my strength. These lands have drained me. Bring me fuel—sweet, juicy fuel..."],
-        ["You have entered the Frozen Forest!", "Navigate through this treacherous woodland for 30 seconds.", "Use Arrow Keys: ← to slow down, → to speed up, ↑ to jump.", "Avoid falling branches and jump over ice patches!", "Survive for 30 seconds to complete this trial."],
+        ["You have reached the Frozen Forest!", "The journey is quick, but be warned...", "It is covered with treacherous ice patches and falling tree branches, which you must avoid. Use Arrow Keys: ← to slow down, → to speed up, ↑ to jump."],
         ["Behold, the Mirror Meadow!", "Click and drag the mirrors to reflect the light beam to the red target."],
         ["The Cipher Stones await your wisdom!", "Select all the solid glyphs and avoid the hollow ones."],
         ["The final trial: the Sky Bridge!", "Step on the floating tiles in ascending order, from 1 to 7."]
@@ -1915,8 +1957,7 @@ function jumpToLevelEnd(levelIndex) {
     showRuneDisplay = levelIndex;
     
     const levelMessages = [
-        "Well done, brave traveler! You have earned a Rune of Winter.",
-        "The ancient power flows through you. Your journey continues..."
+        "Well done, brave traveler! You have earned a Rune of Winter. The ancient power flows through you. Your journey continues...",
     ];
     
     showDialogue(levelMessages, () => {
