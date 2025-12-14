@@ -1504,10 +1504,17 @@ class IceFieldLevel {
         this.playerGridX = 0;
         this.playerGridY = Math.floor(this.gridRows / 2);
         
-        // Reset all blocks
+        // Reset all blocks to stable and not broken
         this.iceBlocks.forEach(block => {
+            block.stable = true;
             block.broken = false;
         });
+        
+        // Clear previous unstable blocks
+        this.unstableBlocks = [];
+        
+        // Select NEW random unstable blocks for this attempt
+        this.selectUnstableBlocks();
         
         // Reset animation states
         this.crackingBlock = null;
