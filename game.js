@@ -1346,8 +1346,8 @@ class IceFieldLevel {
     }
     
     selectUnstableBlocks() {
-        // Select 10-13 blocks to be unstable
-        const numUnstable = 10 + Math.floor(Math.random() * 4);
+        // Select 12-15 blocks to be unstable
+        const numUnstable = 12 + Math.floor(Math.random() * 4);
         
         // Try up to 100 times to find a valid configuration
         for (let attempt = 0; attempt < 100; attempt++) {
