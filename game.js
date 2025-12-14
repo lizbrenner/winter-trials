@@ -1747,16 +1747,6 @@ class IceFieldLevel {
             }
         }
         
-        // Environmental flavor - frozen skeleton (optional)
-        if (!this.warningPhase) {
-            const skeletonBlock = this.getBlockAt(2, 4);
-            if (skeletonBlock && skeletonBlock.stable) {
-                ctx.fillStyle = '#cccccc';
-                ctx.font = '24px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('☠', skeletonBlock.x + this.blockSize / 2, skeletonBlock.y + this.blockSize / 2);
-            }
-        }
     }
     
     cleanup() {
