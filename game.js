@@ -137,6 +137,25 @@ let runeALoaded = false;
 runeAImage.onload = () => {
     runeALoaded = true;
 };
+// Load ice field images for level 3
+const iceFieldBackgroundImage = new Image();
+iceFieldBackgroundImage.src = 'ice-field-background.png';
+let iceFieldBackgroundLoaded = false;
+iceFieldBackgroundImage.onload = () => {
+    iceFieldBackgroundLoaded = true;
+};
+const iceBlockImage = new Image();
+iceBlockImage.src = 'ice.png';
+let iceBlockLoaded = false;
+iceBlockImage.onload = () => {
+    iceBlockLoaded = true;
+};
+const iceCrackImage = new Image();
+iceCrackImage.src = 'ice-crack.png';
+let iceCrackLoaded = false;
+iceCrackImage.onload = () => {
+    iceCrackLoaded = true;
+};
 // Load rune background image for all rune displays
 const runeBackgroundImage = new Image();
 runeBackgroundImage.src = 'rune-background.png';
@@ -1251,7 +1270,7 @@ class FrozenForestLevel {
     }
 }
 // ===================
-// LEVEL 3: The Ice Field of Trial
+// LEVEL 3: The Frozen Reach
 // ===================
 class IceFieldLevel {
     constructor() {
@@ -1494,12 +1513,33 @@ class IceFieldLevel {
     
     draw() {
         // Background - medieval winter landscape
-        ctx.fillStyle = '#b8c9d8';
-        ctx.fillRect(0, 0, 800, 600);
-        
-        // Draw darker ground below ice
-        ctx.fillStyle = '#4a5d6d';
-        ctx.fillRect(0, 400, 800, 200);
+        if (iceFieldBackgroundLoaded) {
+            ctx.imageSmoothingEnabled = false;
+            const canvasAspect = canvas.width / canvas.height;
+            const imageAspect = iceFieldBackgroundImage.width / iceFieldBackgroundImage.height;
+            let drawWidth, drawHeight, offsetX, offsetY;
+            
+            if (imageAspect > canvasAspect) {
+                drawHeight = canvas.height;
+                drawWidth = iceFieldBackgroundImage.width * (canvas.height / iceFieldBackgroundImage.height);
+                offsetX = (canvas.width - drawWidth) / 2;
+                offsetY = 0;
+            } else {
+                drawWidth = canvas.width;
+                drawHeight = iceFieldBackgroundImage.height * (canvas.width / iceFieldBackgroundImage.width);
+                offsetX = 0;
+                offsetY = (canvas.height - drawHeight) / 2;
+            }
+            ctx.drawImage(iceFieldBackgroundImage, offsetX, offsetY, drawWidth, drawHeight);
+        } else {
+            // Fallback background while image loads
+            ctx.fillStyle = '#b8c9d8';
+            ctx.fillRect(0, 0, 800, 600);
+            
+            // Draw darker ground below ice
+            ctx.fillStyle = '#4a5d6d';
+            ctx.fillRect(0, 400, 800, 200);
+        }
         
         // Title with semi-transparent background
         ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
@@ -1525,7 +1565,7 @@ class IceFieldLevel {
         ctx.fillStyle = '#ffffff';
         ctx.font = '18px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('The Ice Field of Trial', 400, 35);
+        ctx.fillText('The Frozen Reach', 400, 35);
         
         if (this.warningPhase) {
             ctx.font = '11px "Press Start 2P"';
@@ -1566,63 +1606,82 @@ class IceFieldLevel {
             ctx.fillRect(x + 4, y + 4, this.blockSize - 8, this.blockSize - 8);
             
             // Determine block appearance
+            ctx.imageSmoothingEnabled = false;
+            
             if (this.crackingBlock === block && this.playerFalling) {
-                // Breaking animation
-                ctx.fillStyle = '#ff6b6b';
-                ctx.fillRect(x, y, this.blockSize, this.blockSize);
-                
-                // Draw cracks
-                ctx.strokeStyle = '#8b0000';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(x, y);
-                ctx.lineTo(x + this.blockSize, y + this.blockSize);
-                ctx.moveTo(x + this.blockSize, y);
-                ctx.lineTo(x, y + this.blockSize);
-                ctx.stroke();
+                // Breaking animation - show cracked ice
+                if (iceCrackLoaded) {
+                    ctx.drawImage(iceCrackImage, x, y, this.blockSize, this.blockSize);
+                    // Add red tint for breaking
+                    ctx.fillStyle = 'rgba(255, 100, 100, 0.4)';
+                    ctx.fillRect(x, y, this.blockSize, this.blockSize);
+                } else {
+                    // Fallback breaking animation
+                    ctx.fillStyle = '#ff6b6b';
+                    ctx.fillRect(x, y, this.blockSize, this.blockSize);
+                    
+                    ctx.strokeStyle = '#8b0000';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + this.blockSize, y + this.blockSize);
+                    ctx.moveTo(x + this.blockSize, y);
+                    ctx.lineTo(x, y + this.blockSize);
+                    ctx.stroke();
+                }
             } else if (this.warningPhase && !block.stable) {
                 // Unstable block during warning - show cracks
-                ctx.fillStyle = '#c0d8e8';
-                ctx.fillRect(x, y, this.blockSize, this.blockSize);
-                
-                // Ice shine
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-                ctx.fillRect(x + 8, y + 8, this.blockSize - 16, 10);
-                
-                // Warning cracks (visible during warning phase)
-                ctx.strokeStyle = '#666666';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(x + this.blockSize / 2, y);
-                ctx.lineTo(x + this.blockSize / 2 - 10, y + this.blockSize);
-                ctx.moveTo(x + this.blockSize / 2, y);
-                ctx.lineTo(x + this.blockSize / 2 + 15, y + this.blockSize);
-                ctx.stroke();
-                
-                // Flicker effect
-                if (Math.random() > 0.7) {
-                    ctx.fillStyle = 'rgba(255, 100, 100, 0.2)';
+                if (iceCrackLoaded) {
+                    ctx.drawImage(iceCrackImage, x, y, this.blockSize, this.blockSize);
+                    
+                    // Flicker effect
+                    if (Math.random() > 0.7) {
+                        ctx.fillStyle = 'rgba(255, 100, 100, 0.2)';
+                        ctx.fillRect(x, y, this.blockSize, this.blockSize);
+                    }
+                } else {
+                    // Fallback
+                    ctx.fillStyle = '#c0d8e8';
                     ctx.fillRect(x, y, this.blockSize, this.blockSize);
+                    
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.fillRect(x + 8, y + 8, this.blockSize - 16, 10);
+                    
+                    ctx.strokeStyle = '#666666';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(x + this.blockSize / 2, y);
+                    ctx.lineTo(x + this.blockSize / 2 - 10, y + this.blockSize);
+                    ctx.moveTo(x + this.blockSize / 2, y);
+                    ctx.lineTo(x + this.blockSize / 2 + 15, y + this.blockSize);
+                    ctx.stroke();
+                    
+                    if (Math.random() > 0.7) {
+                        ctx.fillStyle = 'rgba(255, 100, 100, 0.2)';
+                        ctx.fillRect(x, y, this.blockSize, this.blockSize);
+                    }
                 }
             } else {
                 // Normal stable ice block
-                ctx.fillStyle = '#d8e9f5';
-                ctx.fillRect(x, y, this.blockSize, this.blockSize);
-                
-                // Ice shine
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-                ctx.fillRect(x + 8, y + 8, this.blockSize - 16, 12);
-                
-                // Ice edge highlight
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(x + 2, y + 2, this.blockSize - 4, this.blockSize - 4);
+                if (iceBlockLoaded) {
+                    ctx.drawImage(iceBlockImage, x, y, this.blockSize, this.blockSize);
+                } else {
+                    // Fallback
+                    ctx.fillStyle = '#d8e9f5';
+                    ctx.fillRect(x, y, this.blockSize, this.blockSize);
+                    
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                    ctx.fillRect(x + 8, y + 8, this.blockSize - 16, 12);
+                    
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x + 2, y + 2, this.blockSize - 4, this.blockSize - 4);
+                    
+                    ctx.strokeStyle = '#7a9db8';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x, y, this.blockSize, this.blockSize);
+                }
             }
-            
-            // Block border
-            ctx.strokeStyle = '#7a9db8';
-            ctx.lineWidth = 1;
-            ctx.strokeRect(x, y, this.blockSize, this.blockSize);
         });
         
         // Draw goal indicator (ancient gate/marker on far right)
@@ -1901,7 +1960,7 @@ function startLevel(levelIndex) {
     const levelIntros = [
         ["Welcome, brave traveler, to Jollygut Hollow!", "I cannot guide you until I have regained my strength. These lands have drained me. Bring me fuel—sweet, juicy fuel..."],
         ["You have reached the Frozen Forest!", "The journey is quick, but be warned...", "It is covered with treacherous ice patches and falling tree branches, which you must avoid. Use Arrow Keys: ← to slow down, → to speed up, ↑ to jump."],
-        ["The Ice Field of Trial", "Not all ice is sworn to hold.", "Winter reveals its weakness only once.", "Those who rush will not see it.", "Step where the ice remembers its strength."],
+        ["The Frozen Reach", "Not all ice is sworn to hold.", "Winter reveals its weakness only once.", "Those who rush will not see it.", "Step where the ice remembers its strength."],
         ["The Cipher Stones await your wisdom!", "Select all the solid glyphs and avoid the hollow ones."],
         ["The final trial: the Sky Bridge!", "Step on the floating tiles in ascending order, from 1 to 7."]
     ];
