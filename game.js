@@ -1274,6 +1274,15 @@ class FrozenForestLevel {
 // ===================
 class IceFieldLevel {
     constructor() {
+        // Load player sprite composite image
+        this.playerSprite = new Image();
+        const compositeFilename = `${gameState.selectedCharacter}-${gameState.selectedHat}-${gameState.selectedTransport}.png`;
+        this.playerSprite.src = compositeFilename;
+        this.playerSpriteLoaded = false;
+        this.playerSprite.onload = () => {
+            this.playerSpriteLoaded = true;
+        };
+        
         // Grid configuration
         this.gridCols = 10;
         this.gridRows = 6;
@@ -1703,42 +1712,39 @@ class IceFieldLevel {
         // Draw player
         const playerBlock = this.getBlockAt(this.playerGridX, this.playerGridY);
         if (playerBlock) {
-            let playerY = playerBlock.y + this.blockSize / 2;
+            let playerY = playerBlock.y;
             
             // Falling animation
             if (this.playerFalling) {
                 playerY += this.crackAnimationFrame * 2;
             }
             
-            // Player sprite (simplified 8-bit character)
-            const playerSize = 40;
-            const playerX = playerBlock.x + this.blockSize / 2;
+            const playerX = playerBlock.x;
+            const playerWidth = this.blockSize;
+            const playerHeight = this.blockSize;
             
             // Shadow
             if (!this.playerFalling) {
                 ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
                 ctx.beginPath();
-                ctx.ellipse(playerX, playerBlock.y + this.blockSize - 5, 15, 5, 0, 0, Math.PI * 2);
+                ctx.ellipse(playerX + this.blockSize / 2, playerBlock.y + this.blockSize - 5, 20, 6, 0, 0, Math.PI * 2);
                 ctx.fill();
             }
             
-            // Body
-            ctx.fillStyle = '#8b7aa8';
-            ctx.fillRect(playerX - 15, playerY - 20, 30, 35);
-            
-            // Head
-            ctx.fillStyle = '#9d8bb8';
-            ctx.fillRect(playerX - 12, playerY - 35, 24, 20);
-            
-            // Eyes
-            ctx.fillStyle = '#2d3748';
-            ctx.fillRect(playerX - 9, playerY - 28, 5, 5);
-            ctx.fillRect(playerX + 4, playerY - 28, 5, 5);
-            
-            // Cape (for medieval feel)
-            ctx.fillStyle = '#3b82f6';
-            ctx.fillRect(playerX - 18, playerY - 18, 6, 25);
-            ctx.fillRect(playerX + 12, playerY - 18, 6, 25);
+            // Draw player sprite
+            ctx.imageSmoothingEnabled = false;
+            if (this.playerSpriteLoaded) {
+                ctx.drawImage(this.playerSprite, playerX, playerY, playerWidth, playerHeight);
+            } else {
+                // Fallback if sprite not loaded
+                ctx.fillStyle = '#8b7aa8';
+                ctx.fillRect(playerX + 10, playerY + 10, playerWidth - 20, playerHeight - 20);
+                
+                // Simple face
+                ctx.fillStyle = '#2d3748';
+                ctx.fillRect(playerX + 18, playerY + 20, 8, 8);
+                ctx.fillRect(playerX + 34, playerY + 20, 8, 8);
+            }
         }
         
         // Environmental flavor - frozen skeleton (optional)
