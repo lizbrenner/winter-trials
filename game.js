@@ -1730,13 +1730,8 @@ class IceFieldLevel {
         // Draw player
         const playerBlock = this.getBlockAt(this.playerGridX, this.playerGridY);
         if (playerBlock) {
-            let playerY = playerBlock.y;
-            
-            // Falling animation
-            if (this.playerFalling) {
-                playerY += this.crackAnimationFrame * 2;
-            }
-            
+            // Keep player at block position (no falling animation)
+            const playerY = playerBlock.y;
             const playerX = playerBlock.x;
             const playerWidth = this.blockSize;
             const playerHeight = this.blockSize;
