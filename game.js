@@ -7,7 +7,7 @@ const gameState = {
     playerName: '',
     selectedCharacter: 'yeti',
     selectedHat: 'hat-normal',
-    selectedTransport: 'sled'
+    selectedTransport: 'reindeer'
 };
 // Canvas setup
 const canvas = document.getElementById('game-canvas');
@@ -2081,7 +2081,7 @@ function setupCustomization() {
     const carouselOptions = {
         character: ['yeti', 'penguin', 'bear'],
         hat: ['hat-normal', 'hat-viking', 'hat-plaid'],
-        transport: ['sled', 'reindeer', 'snowboard']
+        transport: ['reindeer', 'sled', 'snowboard']
     };
     
     const carouselIndices = {
