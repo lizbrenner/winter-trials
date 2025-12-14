@@ -313,8 +313,7 @@ function completeLevel() {
     awardRune();
     
     const levelMessages = [
-        "Well done, brave traveler! You have earned a Rune of Winter.",
-        "The ancient power flows through you. Your journey continues..."
+        "Well done, brave traveler! You have earned a Rune of Winter. The ancient power flows through you. Your journey continues..."
     ];
     
     showDialogue(levelMessages, () => {

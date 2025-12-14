@@ -1953,7 +1953,7 @@ function startLevel(levelIndex) {
     const levelIntros = [
         ["Welcome, brave traveler, to Jollygut Hollow!", "I cannot guide you until I have regained my strength. These lands have drained me. Bring me fuel—sweet, juicy fuel..."],
         ["You have reached the Frozen Forest!", "The journey is quick, but be warned...", "It is covered with treacherous ice patches and falling tree branches, which you must avoid. Use Arrow Keys: ← to slow down, → to speed up, ↑ to jump."],
-        ["The Frozen Reach", "Not all ice is sworn to hold.", "Winter reveals its weakness only once.", "Those who rush will not see it.", "Step where the ice remembers its strength."],
+        ["We have arrived at The Frozen Reach", "Not all ice is sworn to hold. Winter reveals its weakness only once.", "Those who rush will not see it. Step where the ice remembers its strength."],
         ["The Cipher Stones await your wisdom!", "Select all the solid glyphs and avoid the hollow ones."],
         ["The final trial: the Sky Bridge!", "Step on the floating tiles in ascending order, from 1 to 7."]
     ];
