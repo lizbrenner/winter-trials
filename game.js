@@ -156,6 +156,12 @@ let iceCrackLoaded = false;
 iceCrackImage.onload = () => {
     iceCrackLoaded = true;
 };
+const splashImage = new Image();
+splashImage.src = 'splash.png';
+let splashLoaded = false;
+splashImage.onload = () => {
+    splashLoaded = true;
+};
 // Load rune background image for all rune displays
 const runeBackgroundImage = new Image();
 runeBackgroundImage.src = 'rune-background.png';
@@ -1492,8 +1498,9 @@ class IceFieldLevel {
         if (this.crackingBlock && this.playerFalling) {
             this.crackAnimationFrame++;
             
-            // After 30 frames (0.5 seconds), restart level
-            if (this.crackAnimationFrame > 30) {
+            // After 90 frames (1.5 seconds), restart level
+            // This gives time to see the splash effect
+            if (this.crackAnimationFrame > 90) {
                 this.restartLevel();
             }
         }
@@ -1625,8 +1632,12 @@ class IceFieldLevel {
             ctx.imageSmoothingEnabled = false;
             
             if (this.crackingBlock === block && this.playerFalling) {
-                // Breaking animation - show cracked ice
-                if (iceCrackLoaded) {
+                // Breaking animation - show splash after initial crack
+                if (this.crackAnimationFrame > 15 && splashLoaded) {
+                    // Show splash effect after 15 frames (0.25 seconds)
+                    ctx.drawImage(splashImage, x, y, this.blockSize, this.blockSize);
+                } else if (iceCrackLoaded) {
+                    // Show cracked ice initially
                     ctx.drawImage(iceCrackImage, x, y, this.blockSize, this.blockSize);
                     // Add red tint for breaking
                     ctx.fillStyle = 'rgba(255, 100, 100, 0.4)';
