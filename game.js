@@ -1711,22 +1711,6 @@ class IceFieldLevel {
             }
         });
         
-        // Draw goal indicator (ancient gate/marker on far right)
-        for (let row = 0; row < this.gridRows; row++) {
-            const goalBlock = this.getBlockAt(this.goalColumn, row);
-            if (goalBlock) {
-                ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
-                ctx.fillRect(goalBlock.x + 5, goalBlock.y + 5, this.blockSize - 10, this.blockSize - 10);
-                
-                // Ancient rune marker
-                ctx.fillStyle = '#ffd700';
-                ctx.font = '24px "Press Start 2P"';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('✦', goalBlock.x + this.blockSize / 2, goalBlock.y + this.blockSize / 2);
-            }
-        }
-        
         // Draw player
         const playerBlock = this.getBlockAt(this.playerGridX, this.playerGridY);
         if (playerBlock) {
