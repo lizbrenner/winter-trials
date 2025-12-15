@@ -21,6 +21,12 @@ let hippoHeroLoaded = false;
 hippoHeroImage.onload = () => {
     hippoHeroLoaded = true;
 };
+const hippoAvatarImage = new Image();
+hippoAvatarImage.src = 'hippo-avatar.png';
+let hippoAvatarLoaded = false;
+hippoAvatarImage.onload = () => {
+    hippoAvatarLoaded = true;
+};
 const winterBackgroundImage = new Image();
 winterBackgroundImage.src = 'home-background.png';
 let winterBackgroundLoaded = false;
@@ -44,6 +50,12 @@ frozenForestWithHippoImage.src = 'frozen-forest-background-with-hippo.png';
 let frozenForestWithHippoLoaded = false;
 frozenForestWithHippoImage.onload = () => {
     frozenForestWithHippoLoaded = true;
+};
+const iceFieldBackgroundStartImage = new Image();
+iceFieldBackgroundStartImage.src = 'ice-field-background-start.jpg';
+let iceFieldBackgroundStartLoaded = false;
+iceFieldBackgroundStartImage.onload = () => {
+    iceFieldBackgroundStartLoaded = true;
 };
 const treeBranchImage = new Image();
 treeBranchImage.src = 'tree-branch.png';
@@ -161,6 +173,20 @@ splashImage.src = 'splash.png';
 let splashLoaded = false;
 splashImage.onload = () => {
     splashLoaded = true;
+};
+
+// Load map image for travel transitions
+const mapImage = new Image();
+mapImage.src = 'map.png';
+let mapLoaded = false;
+mapImage.onload = () => {
+    mapLoaded = true;
+};
+const towerImage = new Image();
+towerImage.src = 'tower-empty.png';
+let towerLoaded = false;
+towerImage.onload = () => {
+    towerLoaded = true;
 };
 // Load rune background image for all rune displays
 const runeBackgroundImage = new Image();
@@ -315,6 +341,159 @@ function drawTitleScreen() {
 // Dialogue Screen Background
 let currentDialogueBackground = 'intro';
 let showRuneDisplay = false; // false or level number (0-4) to show rune
+
+// Map Transition System
+let mapTransitionActive = false;
+let mapTransitionProgress = 0;
+let mapStartPos = { x: 0, y: 0 };
+let mapEndPos = { x: 0, y: 0 };
+let mapTransitionCallback = null;
+let mapTransitionSprite = null;
+let mapTransitionDestination = '';
+
+// Final Gate System
+let finalGatePhase = 'intro'; // 'intro' or 'input'
+let finalGateInputValues = ['', '', '', '', '']; // 5 input boxes
+let finalGateSelectedInput = 0; // Currently selected input box (0-4)
+let finalGateMessage = '';
+let finalGateMessageType = ''; // 'success' or 'error'
+
+function showMapTransition(startPos, endPos, destinationName, onComplete) {
+    mapTransitionActive = true;
+    mapTransitionProgress = 0;
+    mapStartPos = startPos;
+    mapEndPos = endPos;
+    mapTransitionDestination = destinationName;
+    mapTransitionCallback = onComplete;
+    gameState.gamePhase = 'map-transition';
+    
+    // Load the sprite image for the character
+    mapTransitionSprite = new Image();
+    const compositeFilename = `${gameState.selectedCharacter}-${gameState.selectedHat}-${gameState.selectedTransport}.png`;
+    mapTransitionSprite.src = compositeFilename;
+}
+
+function updateMapTransition() {
+    if (!mapTransitionActive) return;
+    
+    // Animate progress over ~6 seconds (360 frames at 60fps)
+    mapTransitionProgress += 1 / 360;
+    
+    if (mapTransitionProgress >= 1) {
+        mapTransitionProgress = 1;
+        // Transition complete, wait a moment then call callback
+        setTimeout(() => {
+            mapTransitionActive = false;
+            if (mapTransitionCallback) {
+                mapTransitionCallback();
+                mapTransitionCallback = null;
+            }
+        }, 500);
+    }
+}
+
+function drawMapTransition() {
+    if (!mapTransitionActive) return;
+    
+    // Draw map background
+    if (mapLoaded) {
+        ctx.imageSmoothingEnabled = false;
+        
+        // Fill canvas with map image
+        const canvasAspect = canvas.width / canvas.height;
+        const imageAspect = mapImage.width / mapImage.height;
+        let drawWidth, drawHeight, offsetX, offsetY;
+        
+        if (imageAspect > canvasAspect) {
+            // Image is wider - fit to height
+            drawHeight = canvas.height;
+            drawWidth = mapImage.width * (canvas.height / mapImage.height);
+            offsetX = (canvas.width - drawWidth) / 2;
+            offsetY = 0;
+        } else {
+            // Image is taller - fit to width
+            drawWidth = canvas.width;
+            drawHeight = mapImage.height * (canvas.width / mapImage.width);
+            offsetX = 0;
+            offsetY = (canvas.height - drawHeight) / 2;
+        }
+        
+        ctx.drawImage(mapImage, offsetX, offsetY, drawWidth, drawHeight);
+        
+        // Calculate sprite position (interpolate between start and end)
+        const t = mapTransitionProgress;
+        // Use easing function for smooth movement
+        const easedT = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; // ease in-out
+        
+        const spriteX = mapStartPos.x + (mapEndPos.x - mapStartPos.x) * easedT;
+        const spriteY = mapStartPos.y + (mapEndPos.y - mapStartPos.y) * easedT;
+        
+        // Convert to screen coordinates
+        const screenX = offsetX + spriteX * drawWidth;
+        const screenY = offsetY + spriteY * drawHeight;
+        
+        // Draw sprite
+        const spriteSize = 80;
+        if (mapTransitionSprite && mapTransitionSprite.complete) {
+            ctx.drawImage(mapTransitionSprite, 
+                screenX - spriteSize / 2, 
+                screenY - spriteSize / 2, 
+                spriteSize, 
+                spriteSize);
+        } else {
+            // Fallback circle if sprite not loaded
+            ctx.fillStyle = '#8b7aa8';
+            ctx.beginPath();
+            ctx.arc(screenX, screenY, spriteSize / 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Add a pulsing glow around the sprite
+        const glowRadius = spriteSize / 2 + 10 + Math.sin(Date.now() * 0.005) * 5;
+        const gradient = ctx.createRadialGradient(screenX, screenY, spriteSize / 2, screenX, screenY, glowRadius);
+        gradient.addColorStop(0, 'rgba(109, 213, 237, 0.3)');
+        gradient.addColorStop(1, 'rgba(109, 213, 237, 0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, glowRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+    } else {
+        // Fallback if map not loaded
+        ctx.fillStyle = '#4a7ba7';
+        ctx.fillRect(0, 0, 800, 600);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '20px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.fillText('Traveling...', 400, 300);
+    }
+    
+    // Title
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    const bgX = 150;
+    const bgY = 20;
+    const bgWidth = 500;
+    const bgHeight = 60;
+    const borderRadius = 16;
+    
+    ctx.beginPath();
+    ctx.moveTo(bgX + borderRadius, bgY);
+    ctx.lineTo(bgX + bgWidth - borderRadius, bgY);
+    ctx.arcTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + borderRadius, borderRadius);
+    ctx.lineTo(bgX + bgWidth, bgY + bgHeight - borderRadius);
+    ctx.arcTo(bgX + bgWidth, bgY + bgHeight, bgX + bgWidth - borderRadius, bgY + bgHeight, borderRadius);
+    ctx.lineTo(bgX + borderRadius, bgY + bgHeight);
+    ctx.arcTo(bgX, bgY + bgHeight, bgX, bgY + bgHeight - borderRadius, borderRadius);
+    ctx.lineTo(bgX, bgY + borderRadius);
+    ctx.arcTo(bgX, bgY, bgX + borderRadius, bgY, borderRadius);
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '18px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Journey to ${mapTransitionDestination}`, 400, 55);
+}
 function drawDialogueScreen() {
     ctx.imageSmoothingEnabled = false;
     // Choose background based on current dialogue context
@@ -358,6 +537,10 @@ function drawDialogueScreen() {
         backgroundImage = frozenForestImage;
         imageLoaded = frozenForestLoaded;
     }
+    else if (currentDialogueBackground === 'level3' && iceFieldBackgroundStartLoaded) {
+        backgroundImage = iceFieldBackgroundStartImage;
+        imageLoaded = iceFieldBackgroundStartLoaded;
+    }
     else if (hippoHeroLoaded) {
         backgroundImage = hippoHeroImage;
         imageLoaded = hippoHeroLoaded;
@@ -400,6 +583,19 @@ function drawDialogueScreen() {
         }
     }
     ctx.drawImage(backgroundImage, offsetX, offsetY, drawWidth, drawHeight);
+    
+    // Overlay hippo avatar for level 2 dialogue only (not level 3, not during rune displays)
+    if (currentDialogueBackground === 'level2' && 
+        hippoAvatarLoaded && 
+        showRuneDisplay === false) {
+        // Position the hippo avatar in the lower left area
+        const avatarWidth = 200;
+        const avatarHeight = 200;
+        const avatarX = 50;
+        const avatarY = canvas.height - avatarHeight - 100; // 100px from bottom
+        
+        ctx.drawImage(hippoAvatarImage, avatarX, avatarY, avatarWidth, avatarHeight);
+    }
 }
 // Dialogue system
 const dialogueBox = document.getElementById('dialogue-box');
@@ -423,10 +619,13 @@ function showNextDialogue(onComplete) {
     dialogueNext.onclick = () => showNextDialogue(onComplete);
 }
 // Rune system
-const RUNE_LETTERS = ['M', 'A', 'N', 'G', 'O'];
+const RUNE_LETTERS = ['O', 'G', 'M', 'N', 'A'];
 function awardRune() {
-    const randomRune = RUNE_LETTERS[Math.floor(Math.random() * RUNE_LETTERS.length)];
-    gameState.runes.push(randomRune);
+    // Award runes in order: O, G, M, N, A (one per level)
+    const runeIndex = gameState.runes.length;
+    if (runeIndex < RUNE_LETTERS.length) {
+        gameState.runes.push(RUNE_LETTERS[runeIndex]);
+    }
     updateRuneDisplay();
 }
 function updateRuneDisplay() {
@@ -458,50 +657,183 @@ function completeLevel() {
             showFinalGate();
         }
         else {
-            startLevel(gameState.currentLevel);
+            // Check if we need to show map transition
+            if (gameState.currentLevel === 1) {
+                // After level 1, before level 2: Jollygut Hollow -> Frozen Forest
+                showMapTransition(
+                    { x: 0.75, y: 0.85 }, // Jollygut Hollow (bottom right corner)
+                    { x: 0.5, y: 0.5 },   // Frozen Forest (center of map)
+                    'Frozen Forest',
+                    () => {
+                        startLevel(gameState.currentLevel);
+                    }
+                );
+            }
+            else if (gameState.currentLevel === 2) {
+                // After level 2, before level 3: Frozen Forest -> The Frozen Reach
+                showMapTransition(
+                    { x: 0.5, y: 0.5 },   // Frozen Forest (center of map)
+                    { x: 0.25, y: 0.5 },  // The Frozen Reach (left center)
+                    'The Frozen Reach',
+                    () => {
+                        startLevel(gameState.currentLevel);
+                    }
+                );
+            }
+            else {
+                startLevel(gameState.currentLevel);
+            }
         }
     });
 }
 // Final Gate
 function showFinalGate() {
+    // Hide HTML final gate overlay
     const finalGate = document.getElementById('final-gate');
-    const finalRunes = document.getElementById('final-runes');
-    const passwordInput = document.getElementById('password-input');
-    const submitButton = document.getElementById('submit-password');
-    const gateMessage = document.getElementById('gate-message');
-    // Display scrambled runes
-    finalRunes.innerHTML = '';
-    gameState.runes.forEach(rune => {
-        const runeEl = document.createElement('div');
-        runeEl.className = 'final-rune';
-        runeEl.textContent = rune;
-        finalRunes.appendChild(runeEl);
-    });
-    finalGate.classList.remove('hidden');
-    passwordInput.value = '';
-    gateMessage.textContent = '';
-    submitButton.onclick = () => {
-        const answer = passwordInput.value.toUpperCase().trim();
-        if (answer === 'MANGO') {
-            gateMessage.textContent = 'The Winter Gate opens! You have proven yourself worthy!';
-            gateMessage.className = 'gate-message success';
-            gameState.gamePhase = 'complete';
-            setTimeout(() => {
-                showDialogue([
-                    "The ancient magic recognizes your wisdom!",
-                    "The Five Winter Trials are complete.",
-                    "May your journey be blessed with eternal winter's beauty!"
-                ], () => {
-                    // Game complete!
-                });
-            }, 2000);
+    finalGate.classList.add('hidden');
+    
+    // Set up canvas-based final gate
+    gameState.gamePhase = 'final-gate';
+    finalGatePhase = 'intro';
+    finalGateInputValues = ['', '', '', '', ''];
+    finalGateSelectedInput = 0;
+    finalGateMessage = '';
+    finalGateMessageType = '';
+    
+    // Add event listener for Continue button (spacebar or Enter during intro)
+    // And keyboard input during input phase
+}
+
+function updateFinalGate() {
+    // Nothing to update in this screen
+}
+
+function drawFinalGate() {
+    // Draw tower background
+    if (towerLoaded) {
+        ctx.imageSmoothingEnabled = false;
+        const canvasAspect = canvas.width / canvas.height;
+        const imageAspect = towerImage.width / towerImage.height;
+        let drawWidth, drawHeight, offsetX, offsetY;
+        
+        if (imageAspect > canvasAspect) {
+            drawHeight = canvas.height;
+            drawWidth = towerImage.width * (canvas.height / towerImage.height);
+            offsetX = (canvas.width - drawWidth) / 2;
+            offsetY = 0;
+        } else {
+            drawWidth = canvas.width;
+            drawHeight = towerImage.height * (canvas.width / towerImage.width);
+            offsetX = 0;
+            offsetY = (canvas.height - drawHeight) / 2;
         }
-        else {
-            gateMessage.textContent = 'The gate remains sealed. Try again...';
-            gateMessage.className = 'gate-message error';
-            passwordInput.value = '';
+        
+        ctx.drawImage(towerImage, offsetX, offsetY, drawWidth, drawHeight);
+    } else {
+        // Fallback background
+        ctx.fillStyle = '#2d4563';
+        ctx.fillRect(0, 0, 800, 600);
+    }
+    
+    if (finalGatePhase === 'intro') {
+        // Draw hippo avatar at bottom (only during intro)
+        if (hippoAvatarLoaded) {
+            const avatarWidth = 150;
+            const avatarHeight = 150;
+            const avatarX = 50;
+            const avatarY = canvas.height - avatarHeight - 20;
+            ctx.drawImage(hippoAvatarImage, avatarX, avatarY, avatarWidth, avatarHeight);
         }
-    };
+        
+        // Show intro text in dialogue box
+        dialogueBox.classList.remove('hidden');
+        dialogueText.textContent = 'The Winter Gate awaits! Unscramble the runes in the right order to unlock the gate.';
+        dialogueNext.onclick = () => {
+            finalGatePhase = 'input';
+            dialogueBox.classList.add('hidden');
+        };
+        
+    } else if (finalGatePhase === 'input') {
+        // Hide dialogue box if showing
+        dialogueBox.classList.add('hidden');
+        
+        // Show 5 input boxes in center
+        const boxWidth = 60;
+        const boxHeight = 70;
+        const boxSpacing = 20;
+        const startX = (canvas.width - (boxWidth * 5 + boxSpacing * 4)) / 2;
+        const startY = 250;
+        
+        for (let i = 0; i < 5; i++) {
+            const x = startX + i * (boxWidth + boxSpacing);
+            const y = startY;
+            
+            // Draw box
+            if (i === finalGateSelectedInput) {
+                // Selected box - highlighted
+                ctx.fillStyle = '#6dd5ed';
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 4;
+            } else {
+                ctx.fillStyle = '#4a5d6d';
+                ctx.strokeStyle = '#2d4563';
+                ctx.lineWidth = 2;
+            }
+            
+            ctx.fillRect(x, y, boxWidth, boxHeight);
+            ctx.strokeRect(x, y, boxWidth, boxHeight);
+            
+            // Draw letter if entered
+            if (finalGateInputValues[i]) {
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '32px "Press Start 2P"';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(finalGateInputValues[i], x + boxWidth / 2, y + boxHeight / 2);
+            }
+        }
+        
+        // Show collected runes at the bottom (O, G, M, N, A)
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '14px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.fillText('Collected Runes:', 400, 520);
+        
+        // Draw the runes in order
+        const runeBoxSize = 50;
+        const runeSpacing = 15;
+        const runeStartX = (canvas.width - (runeBoxSize * 5 + runeSpacing * 4)) / 2;
+        const runeY = 550;
+        
+        for (let i = 0; i < gameState.runes.length; i++) {
+            const x = runeStartX + i * (runeBoxSize + runeSpacing);
+            
+            // Draw rune box
+            ctx.fillStyle = '#6a5a88';
+            ctx.fillRect(x, runeY, runeBoxSize, runeBoxSize);
+            ctx.strokeStyle = '#8b7aa8';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, runeY, runeBoxSize, runeBoxSize);
+            
+            // Draw rune letter
+            ctx.fillStyle = '#ffd700';
+            ctx.font = '24px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(gameState.runes[i], x + runeBoxSize / 2, runeY + runeBoxSize / 2);
+        }
+        
+        // Show message if any
+        if (finalGateMessage) {
+            ctx.font = '12px "Press Start 2P"';
+            if (finalGateMessageType === 'success') {
+                ctx.fillStyle = '#4ade80';
+            } else {
+                ctx.fillStyle = '#f87171';
+            }
+            ctx.fillText(finalGateMessage, 400, 420);
+        }
+    }
 }
 // ===================
 // LEVEL 1: Jollygut Hollow
@@ -1313,7 +1645,7 @@ class IceFieldLevel {
         
         // Warning phase
         this.warningPhase = true;
-        this.warningTimer = 120; // 2 seconds at 60fps
+        this.warningTimer = 90; // 1.5 seconds at 60fps
         this.warningShakeOffset = 0;
         
         // Animation states
@@ -1530,7 +1862,7 @@ class IceFieldLevel {
         
         // Restart warning phase
         this.warningPhase = true;
-        this.warningTimer = 120;
+        this.warningTimer = 90; // 1.5 seconds at 60fps
         this.canMove = false;
     }
     
@@ -1947,13 +2279,16 @@ function startLevel(levelIndex) {
     else if (levelIndex === 1) {
         currentDialogueBackground = 'level2'; // Use Frozen Forest with Hippo background
     }
+    else if (levelIndex === 2) {
+        currentDialogueBackground = 'level3'; // Use Ice Field background with Hippo
+    }
     else {
         currentDialogueBackground = 'intro'; // Use hippo-hero for other levels
     }
     const levelIntros = [
-        ["Welcome, brave traveler, to Jollygut Hollow!", "I cannot guide you until I have regained my strength. These lands have drained me. Bring me fuel—sweet, juicy fuel..."],
-        ["You have reached the Frozen Forest!", "The journey is quick, but be warned...", "It is covered with treacherous ice patches and falling tree branches, which you must avoid. Use Arrow Keys: ← to slow down, → to speed up, ↑ to jump."],
-        ["We have arrived at The Frozen Reach", "Not all ice is sworn to hold. Winter reveals its weakness only once.", "Those who rush will not see it. Step where the ice remembers its strength."],
+        ["Welcome, brave traveler, to Jollygut Hollow!", "I cannot guide you until I have regained my strength. These lands have drained me. Bring me fuel - sweet, juicy fuel..."],
+        ["You have reached the Frozen Forest!", "The journey is quick, but be warned...", "It is covered with treacherous ice patches and falling tree branches, which you must avoid.", "Use Arrow Keys: ← to slow down, → to speed up, ↑ to jump."],
+        ["The Frozen Reach is ahead!", "You must cross the icey river. Yet not all ice is sworn to hold. Winter reveals its cracks only once.", "Those who rush will not see it. Step where the ice remembers its strength."],
         ["The Cipher Stones await your wisdom!", "Select all the solid glyphs and avoid the hollow ones."],
         ["The final trial: the Sky Bridge!", "Step on the floating tiles in ascending order, from 1 to 7."]
     ];
@@ -1991,6 +2326,16 @@ function gameLoop() {
     else if (gameState.gamePhase === 'dialogue') {
         // Show hippo hero background during dialogue
         drawDialogueScreen();
+    }
+    else if (gameState.gamePhase === 'map-transition') {
+        // Show map transition animation
+        updateMapTransition();
+        drawMapTransition();
+    }
+    else if (gameState.gamePhase === 'final-gate') {
+        // Show final gate puzzle
+        updateFinalGate();
+        drawFinalGate();
     }
     requestAnimationFrame(gameLoop);
 }
@@ -2152,8 +2497,7 @@ function startGameIntro() {
         "The land is frozen in eternal winter and I have lost my companion in the midst of the winter storm.",
         "Only you can restore balance and bring my companion back.",
         "The villagers say he was last seen inside the Winter Tower, locked behind a gate.",
-        "Complete the Five Winter Trials to earn the Runes of Winter.",
-        "With these runes, you shall unlock the ancient gate to the Winter Tower.",
+        "Complete the Five Winter Trials to earn the Runes of Winter. With these runes, you shall unlock the ancient gate to the Winter Tower.",
         "Bountiful treasures await if you can bring my companinion back safely.",
         "Your journey begins now... Good luck!"
     ], () => {
@@ -2167,6 +2511,63 @@ startGameButton.addEventListener('click', () => {
 });
 // Set up customization screen
 setupCustomization();
+// Set up keyboard handler for final gate
+window.addEventListener('keydown', (e) => {
+    if (gameState.gamePhase !== 'final-gate' || finalGatePhase !== 'input') return;
+    
+    // Handle letter input
+    if (e.key.length === 1 && e.key.match(/[a-zA-Z]/)) {
+        const letter = e.key.toUpperCase();
+        // Find first empty box
+        const emptyIndex = finalGateInputValues.findIndex(val => val === '');
+        if (emptyIndex !== -1) {
+            finalGateInputValues[emptyIndex] = letter;
+            finalGateSelectedInput = Math.min(4, emptyIndex + 1);
+        }
+    }
+    // Handle backspace
+    else if (e.key === 'Backspace') {
+        // Find last filled box
+        for (let i = 4; i >= 0; i--) {
+            if (finalGateInputValues[i] !== '') {
+                finalGateInputValues[i] = '';
+                finalGateSelectedInput = i;
+                finalGateMessage = '';
+                break;
+            }
+        }
+    }
+    // Handle Enter - submit answer
+    else if (e.key === 'Enter') {
+        const answer = finalGateInputValues.join('');
+        if (answer.length === 5) {
+            if (answer === 'MANGO') {
+                finalGateMessage = 'The Winter Gate Opens!';
+                finalGateMessageType = 'success';
+                gameState.gamePhase = 'complete';
+                setTimeout(() => {
+                    showDialogue([
+                        "The ancient magic recognizes your wisdom!",
+                        "The Five Winter Trials are complete.",
+                        "May your journey be blessed with eternal winter's beauty!"
+                    ], () => {
+                        // Game complete!
+                    });
+                }, 2000);
+            } else {
+                finalGateMessage = 'The gate remains sealed. Try again...';
+                finalGateMessageType = 'error';
+                // Clear after a moment
+                setTimeout(() => {
+                    finalGateInputValues = ['', '', '', '', ''];
+                    finalGateSelectedInput = 0;
+                    finalGateMessage = '';
+                }, 1500);
+            }
+        }
+    }
+});
+
 // Set up restart button
 const restartButton = document.getElementById('restart-button');
 restartButton.addEventListener('click', () => {
@@ -2296,7 +2697,30 @@ function jumpToLevelEnd(levelIndex) {
         if (gameState.currentLevel >= 5) {
             showFinalGate();
         } else {
-            startLevel(gameState.currentLevel);
+            // Check if we need to show map transition
+            if (gameState.currentLevel === 1) {
+                // After level 1, before level 2: Jollygut Hollow -> Frozen Forest
+                showMapTransition(
+                    { x: 0.75, y: 0.85 }, // Jollygut Hollow (bottom right corner)
+                    { x: 0.5, y: 0.5 },   // Frozen Forest (center of map)
+                    'Frozen Forest',
+                    () => {
+                        startLevel(gameState.currentLevel);
+                    }
+                );
+            } else if (gameState.currentLevel === 2) {
+                // After level 2, before level 3: Frozen Forest -> The Frozen Reach
+                showMapTransition(
+                    { x: 0.5, y: 0.5 },   // Frozen Forest (center of map)
+                    { x: 0.25, y: 0.5 },  // The Frozen Reach (left center)
+                    'The Frozen Reach',
+                    () => {
+                        startLevel(gameState.currentLevel);
+                    }
+                );
+            } else {
+                startLevel(gameState.currentLevel);
+            }
         }
     });
     
