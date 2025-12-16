@@ -188,6 +188,45 @@ let towerLoaded = false;
 towerImage.onload = () => {
     towerLoaded = true;
 };
+// Load parchment rune images for final gate display
+const parchmentRuneImages = {};
+const parchmentRuneLetters = ['o', 'g', 'm', 'n', 'a'];
+parchmentRuneLetters.forEach(letter => {
+    const img = new Image();
+    img.src = `parchment-rune-${letter}.png`;
+    parchmentRuneImages[letter.toUpperCase()] = img;
+});
+// Load tower animation images for MANGO reveal
+const towerAnimationImages = [];
+const towerAnimationFiles = [
+    'tower-m.png',
+    'tower-ma.png',
+    'tower-man.png',
+    'tower-mang.png',
+    'tower-mango.png',
+    'tower-open-mango-free-1.png',
+    'tower-open-mango-free-2.png',
+    'tower-open-mango-free-3.png'
+];
+towerAnimationFiles.forEach(filename => {
+    const img = new Image();
+    img.src = filename;
+    towerAnimationImages.push(img);
+});
+// Load mango and hippo completion image
+const mangoAndHippoImage = new Image();
+mangoAndHippoImage.src = 'mango-and-hippo.png';
+let mangoAndHippoLoaded = false;
+mangoAndHippoImage.onload = () => {
+    mangoAndHippoLoaded = true;
+};
+// Load final image
+const finalImage = new Image();
+finalImage.src = 'final.png';
+let finalImageLoaded = false;
+finalImage.onload = () => {
+    finalImageLoaded = true;
+};
 // Load rune background image for all rune displays
 const runeBackgroundImage = new Image();
 runeBackgroundImage.src = 'rune-background.png';
@@ -200,15 +239,35 @@ const backgroundMusic = new Audio('intro-background-music.mp3');
 backgroundMusic.loop = true;
 backgroundMusic.volume = 0.4; // 40% volume
 backgroundMusic.preload = 'auto'; // Preload the audio
+const endCreditsMusic = new Audio('end-credits-music.mp3');
+endCreditsMusic.loop = true;
+endCreditsMusic.volume = 0.4; // 40% volume
+endCreditsMusic.preload = 'auto'; // Preload the audio
 let isMuted = false;
+let currentMusic = backgroundMusic; // Track which music is playing
 function startBackgroundMusic() {
     backgroundMusic.play().catch(error => {
         console.log("Audio autoplay prevented. Will play after user interaction:", error);
     });
 }
+function switchToEndCreditsMusic() {
+    // Stop background music completely
+    backgroundMusic.pause();
+    backgroundMusic.currentTime = 0;
+    
+    // Switch to end credits music
+    currentMusic = endCreditsMusic;
+    endCreditsMusic.muted = isMuted;
+    endCreditsMusic.currentTime = 0; // Start from beginning
+    endCreditsMusic.play().catch(error => {
+        console.log("End credits music autoplay prevented:", error);
+    });
+}
 function toggleMusicMute() {
     isMuted = !isMuted;
+    // Keep both tracks in sync for mute state
     backgroundMusic.muted = isMuted;
+    endCreditsMusic.muted = isMuted;
     const musicButton = document.getElementById('music-toggle-button');
     if (isMuted) {
         musicButton.classList.add('muted');
@@ -352,11 +411,78 @@ let mapTransitionSprite = null;
 let mapTransitionDestination = '';
 
 // Final Gate System
-let finalGatePhase = 'intro'; // 'intro' or 'input'
+let finalGatePhase = 'intro'; // 'intro', 'input', or 'animation'
 let finalGateInputValues = ['', '', '', '', '']; // 5 input boxes
 let finalGateSelectedInput = 0; // Currently selected input box (0-4)
 let finalGateMessage = '';
 let finalGateMessageType = ''; // 'success' or 'error'
+// Tower animation variables
+let towerAnimationActive = false;
+let towerAnimationFrame = 0;
+let towerAnimationIndex = 0; // Current image in the sequence
+const TOWER_ANIMATION_FRAME_DURATION = 60; // 1 second at 60fps
+
+// Credits System
+let creditsScrollY = 0;
+const CREDITS_SCROLL_SPEED = 0.5; // Pixels per frame
+const creditsLines = [
+    '',
+    '',
+    '',
+    'THE FIVE WINTER TRIALS',
+    '',
+    '',
+    'A Game of Snow and Courage',
+    '',
+    '',
+    '',
+    '',
+    'GAME DESIGN',
+    'Winter Game Studios',
+    '',
+    '',
+    'PROGRAMMING',
+    'Chief Code Architect',
+    '',
+    '',
+    'ART & GRAPHICS',
+    'Pixel Perfect Artists',
+    '',
+    '',
+    'MUSIC & SOUND',
+    'Frosty Audio Productions',
+    '',
+    '',
+    'SPECIAL THANKS',
+    'Frostwaddle the Winter Spirit',
+    'Mango the Companion',
+    'Queen BooBear',
+    '',
+    '',
+    'FEATURING',
+    'Yeti, Penguin, and Bear',
+    '',
+    '',
+    'LEVEL DESIGN',
+    'Jollygut Hollow',
+    'The Frozen Forest',
+    'The Frozen Reach',
+    'The Goblin Grotto',
+    'The Sky Bridge',
+    '',
+    '',
+    'THANK YOU FOR PLAYING!',
+    '',
+    '',
+    'May your journey be blessed',
+    'with eternal winters beauty',
+    '',
+    '',
+    '',
+    '',
+    '',
+    ''
+];
 
 function showMapTransition(startPos, endPos, destinationName, onComplete) {
     mapTransitionActive = true;
@@ -541,6 +667,10 @@ function drawDialogueScreen() {
         backgroundImage = iceFieldBackgroundStartImage;
         imageLoaded = iceFieldBackgroundStartLoaded;
     }
+    else if (currentDialogueBackground === 'complete' && mangoAndHippoLoaded) {
+        backgroundImage = mangoAndHippoImage;
+        imageLoaded = mangoAndHippoLoaded;
+    }
     else if (hippoHeroLoaded) {
         backgroundImage = hippoHeroImage;
         imageLoaded = hippoHeroLoaded;
@@ -680,6 +810,17 @@ function completeLevel() {
                     }
                 );
             }
+            else if (gameState.currentLevel === 3) {
+                // After level 3, before level 4: The Frozen Reach -> Goblin Grotto
+                showMapTransition(
+                    { x: 0.25, y: 0.5 },  // The Frozen Reach (left, middle)
+                    { x: 0.75, y: 0.5 },  // Goblin Grotto (right, middle)
+                    'Goblin Grotto',
+                    () => {
+                        startLevel(gameState.currentLevel);
+                    }
+                );
+            }
             else {
                 startLevel(gameState.currentLevel);
             }
@@ -692,6 +833,13 @@ function showFinalGate() {
     const finalGate = document.getElementById('final-gate');
     finalGate.classList.add('hidden');
     
+    // Reset tower image to empty tower
+    towerImage.src = 'tower-empty.png';
+    towerLoaded = false;
+    towerImage.onload = () => {
+        towerLoaded = true;
+    };
+    
     // Set up canvas-based final gate
     gameState.gamePhase = 'final-gate';
     finalGatePhase = 'intro';
@@ -700,35 +848,81 @@ function showFinalGate() {
     finalGateMessage = '';
     finalGateMessageType = '';
     
+    // Reset animation state
+    towerAnimationActive = false;
+    towerAnimationFrame = 0;
+    towerAnimationIndex = 0;
+    
     // Add event listener for Continue button (spacebar or Enter during intro)
     // And keyboard input during input phase
 }
 
 function updateFinalGate() {
-    // Nothing to update in this screen
+    // Update tower animation if active
+    if (towerAnimationActive) {
+        towerAnimationFrame++;
+        
+        // Determine duration for current frame
+        // Last image (tower-open-mango-free-3.png) holds for 4 seconds (240 frames)
+        const isLastImage = towerAnimationIndex === towerAnimationImages.length - 1;
+        const frameDuration = isLastImage ? 240 : TOWER_ANIMATION_FRAME_DURATION;
+        
+        // Change to next image after duration
+        if (towerAnimationFrame >= frameDuration) {
+            towerAnimationFrame = 0;
+            towerAnimationIndex++;
+            
+            // If we've shown all animation frames, complete the sequence
+            if (towerAnimationIndex >= towerAnimationImages.length) {
+                towerAnimationActive = false;
+                // Show completion dialogue with mango-and-hippo background
+                currentDialogueBackground = 'complete';
+                // Switch to end credits music
+                switchToEndCreditsMusic();
+                showDialogue([
+                    "The ancient magic recognizes your wisdom and you have unlocked the Winter Gate!",
+                    "Thank you for returning my companion, Mango! He is very special to me and I would have been lost without him.",
+                    "As a thank you for your hard work, please seek Queen BooBear in the Winter Palace to receive your reward."
+                ], () => {
+                    // Start rolling credits
+                    gameState.gamePhase = 'credits';
+                    creditsScrollY = 0; // Reset scroll position
+                    dialogueBox.classList.add('hidden');
+                });
+            }
+        }
+    }
 }
 
 function drawFinalGate() {
-    // Draw tower background
-    if (towerLoaded) {
+    // Draw tower background - use animation images if in animation phase
+    let currentTowerImage = towerImage;
+    let imageLoaded = towerLoaded;
+    
+    if (finalGatePhase === 'animation' && towerAnimationActive) {
+        currentTowerImage = towerAnimationImages[towerAnimationIndex];
+        imageLoaded = currentTowerImage && currentTowerImage.complete;
+    }
+    
+    if (imageLoaded) {
         ctx.imageSmoothingEnabled = false;
         const canvasAspect = canvas.width / canvas.height;
-        const imageAspect = towerImage.width / towerImage.height;
+        const imageAspect = currentTowerImage.width / currentTowerImage.height;
         let drawWidth, drawHeight, offsetX, offsetY;
         
         if (imageAspect > canvasAspect) {
             drawHeight = canvas.height;
-            drawWidth = towerImage.width * (canvas.height / towerImage.height);
+            drawWidth = currentTowerImage.width * (canvas.height / currentTowerImage.height);
             offsetX = (canvas.width - drawWidth) / 2;
             offsetY = 0;
         } else {
             drawWidth = canvas.width;
-            drawHeight = towerImage.height * (canvas.width / towerImage.width);
+            drawHeight = currentTowerImage.height * (canvas.width / currentTowerImage.width);
             offsetX = 0;
             offsetY = (canvas.height - drawHeight) / 2;
         }
         
-        ctx.drawImage(towerImage, offsetX, offsetY, drawWidth, drawHeight);
+        ctx.drawImage(currentTowerImage, offsetX, offsetY, drawWidth, drawHeight);
     } else {
         // Fallback background
         ctx.fillStyle = '#2d4563';
@@ -793,34 +987,43 @@ function drawFinalGate() {
             }
         }
         
-        // Show collected runes at the bottom (O, G, M, N, A)
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '14px "Press Start 2P"';
-        ctx.textAlign = 'center';
-        ctx.fillText('Collected Runes:', 400, 520);
-        
-        // Draw the runes in order
-        const runeBoxSize = 50;
-        const runeSpacing = 15;
-        const runeStartX = (canvas.width - (runeBoxSize * 5 + runeSpacing * 4)) / 2;
-        const runeY = 550;
-        
-        for (let i = 0; i < gameState.runes.length; i++) {
-            const x = runeStartX + i * (runeBoxSize + runeSpacing);
-            
-            // Draw rune box
-            ctx.fillStyle = '#6a5a88';
-            ctx.fillRect(x, runeY, runeBoxSize, runeBoxSize);
-            ctx.strokeStyle = '#8b7aa8';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(x, runeY, runeBoxSize, runeBoxSize);
-            
-            // Draw rune letter
-            ctx.fillStyle = '#ffd700';
-            ctx.font = '24px "Press Start 2P"';
+        // Show collected runes at the bottom (O, G, M, N, A) - but not when success message is showing
+        if (finalGateMessageType !== 'success') {
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '14px "Press Start 2P"';
             ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(gameState.runes[i], x + runeBoxSize / 2, runeY + runeBoxSize / 2);
+            ctx.fillText('Collected Runes:', 400, 520);
+            
+            // Draw the runes using parchment images
+            const runeImageSize = 60;
+            const runeSpacing = 15;
+            const runeStartX = (canvas.width - (runeImageSize * 5 + runeSpacing * 4)) / 2;
+            const runeY = 540;
+            
+            for (let i = 0; i < gameState.runes.length; i++) {
+                const x = runeStartX + i * (runeImageSize + runeSpacing);
+                const runeLetter = gameState.runes[i];
+                const runeImage = parchmentRuneImages[runeLetter];
+                
+                // Draw parchment rune image if loaded
+                if (runeImage && runeImage.complete) {
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(runeImage, x, runeY, runeImageSize, runeImageSize);
+                } else {
+                    // Fallback: draw box with letter if image not loaded
+                    ctx.fillStyle = '#6a5a88';
+                    ctx.fillRect(x, runeY, runeImageSize, runeImageSize);
+                    ctx.strokeStyle = '#8b7aa8';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x, runeY, runeImageSize, runeImageSize);
+                    
+                    ctx.fillStyle = '#ffd700';
+                    ctx.font = '24px "Press Start 2P"';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(runeLetter, x + runeImageSize / 2, runeY + runeImageSize / 2);
+                }
+            }
         }
         
         // Show message if any
@@ -833,8 +1036,94 @@ function drawFinalGate() {
             }
             ctx.fillText(finalGateMessage, 400, 420);
         }
+    } else if (finalGatePhase === 'animation') {
+        // During animation, only show the tower images (no input boxes or runes)
+        // The tower images are already drawn above
     }
 }
+
+// Credits System Functions
+function updateCredits() {
+    creditsScrollY += CREDITS_SCROLL_SPEED;
+    
+    // Calculate total height of credits
+    const lineHeight = 30;
+    const totalHeight = creditsLines.length * lineHeight;
+    
+    // When credits have scrolled past the screen, show final image
+    if (creditsScrollY > totalHeight + canvas.height) {
+        gameState.gamePhase = 'final';
+    }
+}
+
+function drawCredits() {
+    // Black background
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw credits text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '12px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    const lineHeight = 30;
+    const startY = canvas.height - creditsScrollY;
+    
+    creditsLines.forEach((line, index) => {
+        const y = startY + (index * lineHeight);
+        
+        // Only draw lines that are visible on screen
+        if (y > -lineHeight && y < canvas.height + lineHeight) {
+            // Make section headers (all caps lines) slightly bigger and gold
+            if (line.length > 0 && line === line.toUpperCase() && 
+                !line.includes('THE FIVE') && !line.includes('THANK YOU')) {
+                ctx.fillStyle = '#ffd700';
+                ctx.font = '10px "Press Start 2P"';
+            } else if (line.includes('THE FIVE WINTER TRIALS')) {
+                ctx.fillStyle = '#6dd5ed';
+                ctx.font = '16px "Press Start 2P"';
+            } else if (line.includes('THANK YOU')) {
+                ctx.fillStyle = '#4ade80';
+                ctx.font = '14px "Press Start 2P"';
+            } else {
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '12px "Press Start 2P"';
+            }
+            
+            ctx.fillText(line, canvas.width / 2, y);
+        }
+    });
+}
+
+function drawFinalScreen() {
+    // Draw final image
+    if (finalImageLoaded) {
+        ctx.imageSmoothingEnabled = false;
+        const canvasAspect = canvas.width / canvas.height;
+        const imageAspect = finalImage.width / finalImage.height;
+        let drawWidth, drawHeight, offsetX, offsetY;
+        
+        if (imageAspect > canvasAspect) {
+            drawHeight = canvas.height;
+            drawWidth = finalImage.width * (canvas.height / finalImage.height);
+            offsetX = (canvas.width - drawWidth) / 2;
+            offsetY = 0;
+        } else {
+            drawWidth = canvas.width;
+            drawHeight = finalImage.height * (canvas.width / finalImage.width);
+            offsetX = 0;
+            offsetY = (canvas.height - drawHeight) / 2;
+        }
+        
+        ctx.drawImage(finalImage, offsetX, offsetY, drawWidth, drawHeight);
+    } else {
+        // Fallback black screen
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+}
+
 // ===================
 // LEVEL 1: Jollygut Hollow
 // ===================
@@ -2288,7 +2577,7 @@ function startLevel(levelIndex) {
     const levelIntros = [
         ["Welcome, brave traveler, to Jollygut Hollow!", "I cannot guide you until I have regained my strength. These lands have drained me. Bring me fuel - sweet, juicy fuel..."],
         ["You have reached the Frozen Forest!", "The journey is quick, but be warned...", "It is covered with treacherous ice patches and falling tree branches, which you must avoid.", "Use Arrow Keys: ← to slow down, → to speed up, ↑ to jump."],
-        ["The Frozen Reach is ahead!", "You must cross the icey river. Yet not all ice is sworn to hold. Winter reveals its cracks only once.", "Those who rush will not see it. Step where the ice remembers its strength."],
+        ["The Frozen Reach is ahead!", "You must cross the icy river. Yet not all ice is sworn to hold. Winter reveals its cracks only once.", "Those who rush will not see it. Step where the ice remembers its strength."],
         ["The Cipher Stones await your wisdom!", "Select all the solid glyphs and avoid the hollow ones."],
         ["The final trial: the Sky Bridge!", "Step on the floating tiles in ascending order, from 1 to 7."]
     ];
@@ -2337,6 +2626,20 @@ function gameLoop() {
         updateFinalGate();
         drawFinalGate();
     }
+    else if (gameState.gamePhase === 'credits') {
+        // Show rolling credits
+        updateCredits();
+        drawCredits();
+    }
+    else if (gameState.gamePhase === 'final') {
+        // Show final image while music finishes
+        drawFinalScreen();
+    }
+    else if (gameState.gamePhase === 'end') {
+        // Clear canvas - game is complete
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
     requestAnimationFrame(gameLoop);
 }
 // Update UI visibility based on game phase
@@ -2361,6 +2664,20 @@ function restartGame() {
     gameState.runes = [];
     gameState.levelComplete = false;
     gameState.gamePhase = 'intro';
+    // Reset tower image to empty
+    towerImage.src = 'tower-empty.png';
+    // Reset credits
+    creditsScrollY = 0;
+    // Reset music to background music
+    endCreditsMusic.pause();
+    endCreditsMusic.currentTime = 0;
+    currentMusic = backgroundMusic;
+    if (!backgroundMusic.paused) {
+        // Music already playing, do nothing
+    } else {
+        backgroundMusic.currentTime = 0;
+        startBackgroundMusic();
+    }
     // Clear rune display
     updateRuneDisplay();
     // Hide final gate if showing
@@ -2501,7 +2818,15 @@ function startGameIntro() {
         "Bountiful treasures await if you can bring my companinion back safely.",
         "Your journey begins now... Good luck!"
     ], () => {
-        startLevel(0);
+        // Show map transition from The Village to Jollygut Hollow before starting level 1
+        showMapTransition(
+            { x: 0.5, y: 0.85 },  // The Village (bottom center of map)
+            { x: 0.75, y: 0.85 }, // Jollygut Hollow (bottom right corner)
+            "Jollygut Hollow",
+            () => {
+                startLevel(0);
+            }
+        );
     });
 }
 // Set up start game button
@@ -2542,18 +2867,13 @@ window.addEventListener('keydown', (e) => {
         const answer = finalGateInputValues.join('');
         if (answer.length === 5) {
             if (answer === 'MANGO') {
-                finalGateMessage = 'The Winter Gate Opens!';
-                finalGateMessageType = 'success';
-                gameState.gamePhase = 'complete';
-                setTimeout(() => {
-                    showDialogue([
-                        "The ancient magic recognizes your wisdom!",
-                        "The Five Winter Trials are complete.",
-                        "May your journey be blessed with eternal winter's beauty!"
-                    ], () => {
-                        // Game complete!
-                    });
-                }, 2000);
+                // Start tower animation sequence
+                finalGatePhase = 'animation';
+                towerAnimationActive = true;
+                towerAnimationFrame = 0;
+                towerAnimationIndex = 0;
+                finalGateMessage = '';
+                finalGateMessageType = '';
             } else {
                 finalGateMessage = 'The gate remains sealed. Try again...';
                 finalGateMessageType = 'error';
@@ -2588,7 +2908,8 @@ startBackgroundMusic();
 
 // Ensure music plays on ANY user interaction if autoplay was blocked
 const ensureMusicPlays = () => {
-    if (backgroundMusic.paused && !isMuted) {
+    // Only try to play background music if we haven't switched to end credits yet
+    if (backgroundMusic.paused && !isMuted && currentMusic === backgroundMusic) {
         startBackgroundMusic();
     }
 };
@@ -2600,7 +2921,7 @@ document.addEventListener('touchstart', ensureMusicPlays);
 
 // Also try to start music after a short delay
 setTimeout(() => {
-    if (backgroundMusic.paused && !isMuted) {
+    if (backgroundMusic.paused && !isMuted && currentMusic === backgroundMusic) {
         startBackgroundMusic();
     }
 }, 100);
@@ -2714,6 +3035,16 @@ function jumpToLevelEnd(levelIndex) {
                     { x: 0.5, y: 0.5 },   // Frozen Forest (center of map)
                     { x: 0.25, y: 0.5 },  // The Frozen Reach (left center)
                     'The Frozen Reach',
+                    () => {
+                        startLevel(gameState.currentLevel);
+                    }
+                );
+            } else if (gameState.currentLevel === 3) {
+                // After level 3, before level 4: The Frozen Reach -> Goblin Grotto
+                showMapTransition(
+                    { x: 0.25, y: 0.5 },  // The Frozen Reach (left, middle)
+                    { x: 0.75, y: 0.5 },  // Goblin Grotto (right, middle)
+                    'Goblin Grotto',
                     () => {
                         startLevel(gameState.currentLevel);
                     }
