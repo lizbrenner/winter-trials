@@ -57,6 +57,54 @@ let iceFieldBackgroundStartLoaded = false;
 iceFieldBackgroundStartImage.onload = () => {
     iceFieldBackgroundStartLoaded = true;
 };
+const goblinGrottoBackgroundImage = new Image();
+goblinGrottoBackgroundImage.src = 'goblin-grotto-background.png';
+let goblinGrottoBackgroundLoaded = false;
+goblinGrottoBackgroundImage.onload = () => {
+    goblinGrottoBackgroundLoaded = true;
+};
+const iceGoblinImage = new Image();
+iceGoblinImage.src = 'ice-goblin-above.png';
+let iceGoblinLoaded = false;
+iceGoblinImage.onload = () => {
+    iceGoblinLoaded = true;
+};
+const iceWallImage = new Image();
+iceWallImage.src = 'ice-wall.png';
+let iceWallLoaded = false;
+iceWallImage.onload = () => {
+    iceWallLoaded = true;
+};
+const iceWallTopBottomImage = new Image();
+iceWallTopBottomImage.src = 'ice-wall-top-bottom.png';
+let iceWallTopBottomLoaded = false;
+iceWallTopBottomImage.onload = () => {
+    iceWallTopBottomLoaded = true;
+};
+const torchImage = new Image();
+torchImage.src = 'torch.png';
+let torchLoaded = false;
+torchImage.onload = () => {
+    torchLoaded = true;
+};
+const fireballUpImage = new Image();
+fireballUpImage.src = 'fireball-up.png';
+let fireballUpLoaded = false;
+fireballUpImage.onload = () => {
+    fireballUpLoaded = true;
+};
+const fireballDownImage = new Image();
+fireballDownImage.src = 'fireball-down.png';
+let fireballDownLoaded = false;
+fireballDownImage.onload = () => {
+    fireballDownLoaded = true;
+};
+const iceCaveBackgroundImage = new Image();
+iceCaveBackgroundImage.src = 'ice-cave-background.png';
+let iceCaveBackgroundLoaded = false;
+iceCaveBackgroundImage.onload = () => {
+    iceCaveBackgroundLoaded = true;
+};
 const treeBranchImage = new Image();
 treeBranchImage.src = 'tree-branch.png';
 let treeBranchLoaded = false;
@@ -667,6 +715,10 @@ function drawDialogueScreen() {
         backgroundImage = iceFieldBackgroundStartImage;
         imageLoaded = iceFieldBackgroundStartLoaded;
     }
+    else if (currentDialogueBackground === 'level4' && goblinGrottoBackgroundLoaded) {
+        backgroundImage = goblinGrottoBackgroundImage;
+        imageLoaded = goblinGrottoBackgroundLoaded;
+    }
     else if (currentDialogueBackground === 'complete' && mangoAndHippoLoaded) {
         backgroundImage = mangoAndHippoImage;
         imageLoaded = mangoAndHippoLoaded;
@@ -816,6 +868,17 @@ function completeLevel() {
                     { x: 0.25, y: 0.5 },  // The Frozen Reach (left, middle)
                     { x: 0.75, y: 0.5 },  // Goblin Grotto (right, middle)
                     'Goblin Grotto',
+                    () => {
+                        startLevel(gameState.currentLevel);
+                    }
+                );
+            }
+            else if (gameState.currentLevel === 4) {
+                // After level 4, before level 5: Goblin Grotto -> Sky Bridge
+                showMapTransition(
+                    { x: 0.75, y: 0.5 },  // Goblin Grotto (right, middle)
+                    { x: 0.5, y: 0.2 },   // Sky Bridge (center top, in the sky)
+                    'Sky Bridge',
                     () => {
                         startLevel(gameState.currentLevel);
                     }
@@ -2371,96 +2434,500 @@ class IceFieldLevel {
         window.removeEventListener('keydown', this.keyDownHandler);
     }
 }
-// ===================
-// LEVEL 4: Cipher Stones
-// ===================
-class CipherStonesLevel {
+// =======================
+// LEVEL 4: Goblin Grotto (Pong-Style Reflection Puzzle)
+// =======================================================
+class GoblinGrottoLevel {
     constructor() {
-        this.stones = [
-            { x: 150, y: 200, glyph: '◆', correct: true, selected: false },
-            { x: 250, y: 200, glyph: '◇', correct: false, selected: false },
-            { x: 350, y: 200, glyph: '●', correct: true, selected: false },
-            { x: 450, y: 200, glyph: '○', correct: false, selected: false },
-            { x: 550, y: 200, glyph: '■', correct: true, selected: false },
-            { x: 650, y: 200, glyph: '□', correct: false, selected: false },
-            { x: 200, y: 350, glyph: '▲', correct: false, selected: false },
-            { x: 300, y: 350, glyph: '▼', correct: true, selected: false },
-            { x: 400, y: 350, glyph: '★', correct: true, selected: false },
-            { x: 500, y: 350, glyph: '☆', correct: false, selected: false },
-            { x: 600, y: 350, glyph: '✦', correct: true, selected: false }
+        // Load player's composite character sprite
+        this.playerSprite = new Image();
+        const compositeFilename = `${gameState.selectedCharacter}-${gameState.selectedHat}-${gameState.selectedTransport}.png`;
+        this.playerSprite.src = compositeFilename;
+        this.playerSpriteLoaded = false;
+        this.playerSprite.onload = () => {
+            this.playerSpriteLoaded = true;
+        };
+        
+        // Shooter (left side, stationary)
+        this.shooter = {
+            x: 100,
+            y: 300,
+            angle: 0  // Radians, controlled by mouse
+        };
+        
+        // Goblin (right side, behind wall)
+        this.goblin = {
+            x: 700,
+            y: 300,
+            radius: 25,
+            alive: true,
+            hit: false
+        };
+        
+        // Wall (blocks direct shots to goblin)
+        this.wall = {
+            x: 620,
+            y: 225,
+            width: 15,
+            height: 150
+        };
+        
+        // Moving crystals (Pong-style paddles)
+        this.crystals = [
+            {
+                x: 400,
+                y: 100,
+                width: 80,
+                height: 12,
+                speed: 2,
+                direction: 1,  // 1 = right/down, -1 = left/up
+                minX: 150,
+                maxX: 650,
+                vertical: false
+            },
+            {
+                x: 300,
+                y: 500,
+                width: 100,
+                height: 12,
+                speed: 3,
+                direction: -1,
+                minX: 150,
+                maxX: 650,
+                vertical: false
+            },
+            {
+                x: 750,
+                y: 300,
+                width: 12,
+                height: 80,
+                speed: 2.5,
+                direction: 1,
+                minY: 120,
+                maxY: 480,
+                vertical: true
+            }
         ];
-        canvas.addEventListener('click', this.selectStone.bind(this));
+        
+        // Projectile
+        this.projectile = null; // {x, y, vx, vy, bounces}
+        
+        // Mouse tracking
+        this.mouseX = 0;
+        this.mouseY = 0;
+        
+        // Event handlers
+        this.mouseMoveHandler = this.handleMouseMove.bind(this);
+        this.mouseClickHandler = this.handleMouseClick.bind(this);
+        
+        canvas.addEventListener('mousemove', this.mouseMoveHandler);
+        canvas.addEventListener('click', this.mouseClickHandler);
     }
-    selectStone(e) {
-        if (gameState.gamePhase !== 'playing')
-            return;
+    
+    handleMouseMove(e) {
         const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        this.stones.forEach(stone => {
-            const dx = mouseX - stone.x;
-            const dy = mouseY - stone.y;
-            if (Math.sqrt(dx * dx + dy * dy) < 35) {
-                stone.selected = !stone.selected;
+        this.mouseX = e.clientX - rect.left;
+        this.mouseY = e.clientY - rect.top;
+        
+        // Calculate angle from shooter to mouse
+        const dx = this.mouseX - this.shooter.x;
+        const dy = this.mouseY - this.shooter.y;
+        this.shooter.angle = Math.atan2(dy, dx);
+    }
+    
+    handleMouseClick(e) {
+        if (gameState.gamePhase !== 'playing') return;
+        if (this.projectile !== null) return; // Already have an active projectile
+        if (!this.goblin.alive) return;
+        
+        // Fire projectile
+        const speed = 8;
+        this.projectile = {
+            x: this.shooter.x,
+            y: this.shooter.y,
+            vx: Math.cos(this.shooter.angle) * speed,
+            vy: Math.sin(this.shooter.angle) * speed,
+            bounces: 0
+        };
+    }
+    
+    update() {
+        if (!this.goblin.alive) return;
+        
+        // Update moving crystals
+        this.crystals.forEach(crystal => {
+            if (crystal.vertical) {
+                // Vertical movement (up/down)
+                crystal.y += crystal.speed * crystal.direction;
+                
+                // Bounce at boundaries
+                if (crystal.y <= crystal.minY || crystal.y + crystal.height >= crystal.maxY) {
+                    crystal.direction *= -1;
+                }
+            } else {
+                // Horizontal movement (left/right)
+                crystal.x += crystal.speed * crystal.direction;
+                
+                // Bounce at boundaries
+                if (crystal.x <= crystal.minX || crystal.x + crystal.width >= crystal.maxX) {
+                    crystal.direction *= -1;
+                }
             }
         });
-        this.checkSolution();
-    }
-    checkSolution() {
-        const allCorrectSelected = this.stones.filter(s => s.correct).every(s => s.selected);
-        const noIncorrectSelected = this.stones.filter(s => !s.correct).every(s => !s.selected);
-        if (allCorrectSelected && noIncorrectSelected) {
-            this.cleanup();
-            completeLevel();
+        
+        // Update projectile
+        if (this.projectile) {
+            this.projectile.x += this.projectile.vx;
+            this.projectile.y += this.projectile.vy;
+            
+            // Check collision with crystals (reflection)
+            this.crystals.forEach(crystal => {
+                if (this.checkProjectileCrystalCollision(this.projectile, crystal)) {
+                    if (crystal.vertical) {
+                        // Vertical crystal - reflect horizontally
+                        this.projectile.vx = -this.projectile.vx;
+                        this.projectile.bounces++;
+                        
+                        // Move projectile out of crystal to prevent double-bounce
+                        if (this.projectile.vx > 0) {
+                            this.projectile.x = crystal.x + crystal.width + 5;
+                        } else {
+                            this.projectile.x = crystal.x - 5;
+                        }
+                    } else {
+                        // Horizontal crystal - reflect vertically
+                        this.projectile.vy = -this.projectile.vy;
+                        this.projectile.bounces++;
+                        
+                        // Move projectile out of crystal to prevent double-bounce
+                        if (this.projectile.vy > 0) {
+                            this.projectile.y = crystal.y + crystal.height + 5;
+                        } else {
+                            this.projectile.y = crystal.y - 5;
+                        }
+                    }
+                }
+            });
+            
+            // Check collision with wall (destroy projectile)
+            if (this.checkProjectileWallCollision(this.projectile, this.wall)) {
+                this.projectile = null;
+                return;
+            }
+            
+            // Check collision with goblin
+            if (this.checkProjectileGoblinCollision(this.projectile, this.goblin)) {
+                this.goblin.alive = false;
+                this.goblin.hit = true;
+                this.projectile = null;
+                
+                // Complete level after delay
+                setTimeout(() => {
+                    this.cleanup();
+                    completeLevel();
+                }, 1500);
+                return;
+            }
+            
+            // Check if projectile left screen (destroy it)
+            if (this.projectile.x < 0 || this.projectile.x > 800 || 
+                this.projectile.y < 0 || this.projectile.y > 600) {
+                this.projectile = null;
+            }
         }
     }
-    update() { }
+    
+    checkProjectileCrystalCollision(proj, crystal) {
+        if (crystal.vertical) {
+            // Vertical crystal - check x collision with tolerance on y
+            return proj.x > crystal.x - 5 && 
+                   proj.x < crystal.x + crystal.width + 5 &&
+                   proj.y > crystal.y && 
+                   proj.y < crystal.y + crystal.height;
+        } else {
+            // Horizontal crystal - check y collision with tolerance on x
+            return proj.x > crystal.x && 
+                   proj.x < crystal.x + crystal.width &&
+                   proj.y > crystal.y - 5 && 
+                   proj.y < crystal.y + crystal.height + 5;
+        }
+    }
+    
+    checkProjectileWallCollision(proj, wall) {
+        return proj.x > wall.x && 
+               proj.x < wall.x + wall.width &&
+               proj.y > wall.y && 
+               proj.y < wall.y + wall.height;
+    }
+    
+    checkProjectileGoblinCollision(proj, goblin) {
+        if (!goblin.alive) return false;
+        const dx = proj.x - goblin.x;
+        const dy = proj.y - goblin.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        return dist < goblin.radius + 5;
+    }
+    
     draw() {
-        ctx.fillStyle = '#b8d4e8';
+        // Black background
+        ctx.fillStyle = '#000000';
         ctx.fillRect(0, 0, 800, 600);
-        // Title
-        ctx.fillStyle = '#2d4563';
+        
+        // Ice cave background (maintain aspect ratio)
+        if (iceCaveBackgroundLoaded) {
+            const canvasAspect = 800 / 600;
+            const imageAspect = iceCaveBackgroundImage.width / iceCaveBackgroundImage.height;
+            let drawWidth, drawHeight, offsetX, offsetY;
+            
+            if (imageAspect > canvasAspect) {
+                // Image is wider - fit to height
+                drawHeight = 600;
+                drawWidth = iceCaveBackgroundImage.width * (600 / iceCaveBackgroundImage.height);
+                offsetX = (800 - drawWidth) / 2;
+                offsetY = 0;
+            } else {
+                // Image is taller - fit to width
+                drawWidth = 800;
+                drawHeight = iceCaveBackgroundImage.height * (800 / iceCaveBackgroundImage.width);
+                offsetX = 0;
+                offsetY = (600 - drawHeight) / 2;
+            }
+            ctx.drawImage(iceCaveBackgroundImage, offsetX, offsetY, drawWidth, drawHeight);
+        }
+        
+        // Title with semi-transparent background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        const bgX = 250;
+        const bgY = 10;
+        const bgWidth = 300;
+        const bgHeight = 50;
+        const borderRadius = 24;
+        
+        ctx.beginPath();
+        ctx.moveTo(bgX + borderRadius, bgY);
+        ctx.lineTo(bgX + bgWidth - borderRadius, bgY);
+        ctx.arcTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + borderRadius, borderRadius);
+        ctx.lineTo(bgX + bgWidth, bgY + bgHeight - borderRadius);
+        ctx.arcTo(bgX + bgWidth, bgY + bgHeight, bgX + bgWidth - borderRadius, bgY + bgHeight, borderRadius);
+        ctx.lineTo(bgX + borderRadius, bgY + bgHeight);
+        ctx.arcTo(bgX, bgY + bgHeight, bgX, bgY + bgHeight - borderRadius, borderRadius);
+        ctx.lineTo(bgX, bgY + borderRadius);
+        ctx.arcTo(bgX, bgY, bgX + borderRadius, bgY, borderRadius);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.fillStyle = '#ffffff';
         ctx.font = '20px "Press Start 2P"';
         ctx.textAlign = 'center';
-        ctx.fillText('Cipher Stones', 400, 40);
-        ctx.font = '10px "Press Start 2P"';
-        ctx.fillText('Select the glowing stones (filled symbols)', 400, 70);
-        // Hint
-        ctx.font = '8px "Press Start 2P"';
-        ctx.fillStyle = '#6dd5ed';
-        ctx.fillText('Hint: Choose solid shapes over hollow ones', 400, 520);
-        // Stones
-        this.stones.forEach(stone => {
-            ctx.save();
-            // Stone base
-            if (stone.selected) {
-                ctx.fillStyle = stone.correct ? '#4ade80' : '#f87171';
+        ctx.fillText('Goblin Grotto', 400, 40);
+        
+        // Draw player's character sprite to the left of shooter (maintain aspect ratio)
+        if (this.playerSpriteLoaded) {
+            const maxSize = 80;
+            const aspect = this.playerSprite.width / this.playerSprite.height;
+            let spriteWidth, spriteHeight;
+            
+            if (aspect > 1) {
+                // Wider than tall
+                spriteWidth = maxSize;
+                spriteHeight = maxSize / aspect;
+            } else {
+                // Taller than wide
+                spriteHeight = maxSize;
+                spriteWidth = maxSize * aspect;
             }
-            else {
-                ctx.fillStyle = '#8b8b8b';
+            
+            const spriteX = this.shooter.x - spriteWidth - 20; // 20px gap from shooter
+            const spriteY = this.shooter.y - spriteHeight / 2; // Centered vertically
+            ctx.drawImage(this.playerSprite, spriteX, spriteY, spriteWidth, spriteHeight);
+        }
+        
+        // Draw torch at shooter position (maintain aspect ratio)
+        if (torchLoaded) {
+            const maxSize = 60;
+            const aspect = torchImage.width / torchImage.height;
+            let torchWidth, torchHeight;
+            
+            if (aspect > 1) {
+                torchWidth = maxSize;
+                torchHeight = maxSize / aspect;
+            } else {
+                torchHeight = maxSize;
+                torchWidth = maxSize * aspect;
             }
+            
+            const torchX = this.shooter.x - torchWidth / 2;
+            const torchY = this.shooter.y - torchHeight / 2;
+            ctx.drawImage(torchImage, torchX, torchY, torchWidth, torchHeight);
+        }
+        
+        // Draw aiming line
+        if (!this.projectile && this.goblin.alive) {
+            ctx.strokeStyle = 'rgba(255, 102, 0, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
             ctx.beginPath();
-            ctx.arc(stone.x, stone.y, 35, 0, Math.PI * 2);
-            ctx.fill();
-            // Glow for correct stones
-            if (stone.correct && !stone.selected) {
-                ctx.strokeStyle = 'rgba(255, 215, 0, 0.4)';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(stone.x, stone.y, 40, 0, Math.PI * 2);
-                ctx.stroke();
+            ctx.moveTo(this.shooter.x, this.shooter.y);
+            ctx.lineTo(
+                this.shooter.x + Math.cos(this.shooter.angle) * 100,
+                this.shooter.y + Math.sin(this.shooter.angle) * 100
+            );
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+        
+        // Draw wall (blocks direct shots)
+        if (iceWallLoaded) {
+            ctx.drawImage(
+                iceWallImage,
+                this.wall.x,
+                this.wall.y,
+                this.wall.width,
+                this.wall.height
+            );
+        } else {
+            // Fallback: draw placeholder rectangle
+            ctx.fillStyle = '#3a3a5e';
+            ctx.fillRect(this.wall.x, this.wall.y, this.wall.width, this.wall.height);
+            ctx.strokeStyle = '#4a4a6e';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(this.wall.x, this.wall.y, this.wall.width, this.wall.height);
+        }
+        
+        // Draw moving crystals (paddles)
+        this.crystals.forEach(crystal => {
+            if (!crystal.vertical && iceWallTopBottomLoaded) {
+                // Horizontal crystals - use ice wall top/bottom image
+                ctx.drawImage(
+                    iceWallTopBottomImage,
+                    crystal.x,
+                    crystal.y,
+                    crystal.width,
+                    crystal.height
+                );
+            } else if (crystal.vertical) {
+                // Vertical crystal - use ice wall image
+                if (iceWallLoaded) {
+                    ctx.drawImage(
+                        iceWallImage,
+                        crystal.x,
+                        crystal.y,
+                        crystal.width,
+                        crystal.height
+                    );
+                } else {
+                    // Fallback for vertical crystal
+                    ctx.fillStyle = '#60c0e0';
+                    ctx.fillRect(crystal.x, crystal.y, crystal.width, crystal.height);
+                }
+            } else {
+                // Fallback for horizontal crystals
+                ctx.fillStyle = 'rgba(100, 200, 255, 0.3)';
+                ctx.fillRect(
+                    crystal.x - 5, 
+                    crystal.y - 5, 
+                    crystal.width + 10, 
+                    crystal.height + 10
+                );
+                
+                ctx.fillStyle = '#60c0e0';
+                ctx.fillRect(crystal.x, crystal.y, crystal.width, crystal.height);
+                
+                ctx.fillStyle = '#a0d8f0';
+                ctx.fillRect(crystal.x, crystal.y, crystal.width, crystal.height / 3);
             }
-            // Glyph
-            ctx.fillStyle = '#fff';
-            ctx.font = '32px Arial';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(stone.glyph, stone.x, stone.y);
-            ctx.restore();
         });
+        
+        // Draw goblin (maintain aspect ratio)
+        if (this.goblin.alive) {
+            if (iceGoblinLoaded) {
+                // Draw ice goblin image centered on goblin position
+                const maxSize = this.goblin.radius * 3;
+                const aspect = iceGoblinImage.width / iceGoblinImage.height;
+                let goblinWidth, goblinHeight;
+                
+                if (aspect > 1) {
+                    goblinWidth = maxSize;
+                    goblinHeight = maxSize / aspect;
+                } else {
+                    goblinHeight = maxSize;
+                    goblinWidth = maxSize * aspect;
+                }
+                
+                ctx.drawImage(
+                    iceGoblinImage,
+                    this.goblin.x - goblinWidth / 2,
+                    this.goblin.y - goblinHeight / 2,
+                    goblinWidth,
+                    goblinHeight
+                );
+            } else {
+                // Fallback: draw placeholder circle
+                ctx.fillStyle = '#4a7c4e';
+                ctx.beginPath();
+                ctx.arc(this.goblin.x, this.goblin.y, this.goblin.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        } else if (this.goblin.hit) {
+            // Victory animation
+            ctx.fillStyle = '#ffcc00';
+            ctx.font = '30px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.fillText('DEFEATED!', 400, 300);
+        }
+        
+        // Draw projectile (maintain aspect ratio)
+        if (this.projectile) {
+            // Determine which fireball image to use based on vertical direction
+            const isGoingUp = this.projectile.vy < 0;
+            const fireballImage = isGoingUp ? fireballUpImage : fireballDownImage;
+            const fireballLoaded = isGoingUp ? fireballUpLoaded : fireballDownLoaded;
+            
+            if (fireballLoaded) {
+                // Draw fireball image maintaining aspect ratio
+                const maxSize = 40;
+                const aspect = fireballImage.width / fireballImage.height;
+                let fireballWidth, fireballHeight;
+                
+                if (aspect > 1) {
+                    fireballWidth = maxSize;
+                    fireballHeight = maxSize / aspect;
+                } else {
+                    fireballHeight = maxSize;
+                    fireballWidth = maxSize * aspect;
+                }
+                
+                ctx.drawImage(
+                    fireballImage,
+                    this.projectile.x - fireballWidth / 2,
+                    this.projectile.y - fireballHeight / 2,
+                    fireballWidth,
+                    fireballHeight
+                );
+            } else {
+                // Fallback: draw placeholder projectile
+                const gradient = ctx.createRadialGradient(
+                    this.projectile.x, this.projectile.y, 0,
+                    this.projectile.x, this.projectile.y, 10
+                );
+                gradient.addColorStop(0, '#ffcc00');
+                gradient.addColorStop(1, 'rgba(255, 204, 0, 0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(this.projectile.x, this.projectile.y, 10, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#ff6600';
+                ctx.beginPath();
+                ctx.arc(this.projectile.x, this.projectile.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
     }
+    
     cleanup() {
-        canvas.removeEventListener('click', this.selectStone.bind(this));
+        canvas.removeEventListener('mousemove', this.mouseMoveHandler);
+        canvas.removeEventListener('click', this.mouseClickHandler);
     }
 }
 // ===================
@@ -2571,6 +3038,9 @@ function startLevel(levelIndex) {
     else if (levelIndex === 2) {
         currentDialogueBackground = 'level3'; // Use Ice Field background with Hippo
     }
+    else if (levelIndex === 3) {
+        currentDialogueBackground = 'level4'; // Use Goblin Grotto background
+    }
     else {
         currentDialogueBackground = 'intro'; // Use hippo-hero for other levels
     }
@@ -2578,7 +3048,7 @@ function startLevel(levelIndex) {
         ["Welcome, brave traveler, to Jollygut Hollow!", "I cannot guide you until I have regained my strength. These lands have drained me. Bring me fuel - sweet, juicy fuel..."],
         ["You have reached the Frozen Forest!", "The journey is quick, but be warned...", "It is covered with treacherous ice patches and falling tree branches, which you must avoid.", "Use Arrow Keys: ← to slow down, → to speed up, ↑ to jump."],
         ["The Frozen Reach is ahead!", "You must cross the icy river. Yet not all ice is sworn to hold. Winter reveals its cracks only once.", "Those who rush will not see it. Step where the ice remembers its strength."],
-        ["The Cipher Stones await your wisdom!", "Select all the solid glyphs and avoid the hollow ones."],
+        ["You stand at the treshold of Goblin Grotto!", "Dark and frost-bound creatures lurk behind stone enclosures deep within these caves. Only the warmth of true light may undo them.", "Floating ice crystals cling to the cavern walls. Take up my torch, and guide your firelight to shatter the goblins. Good luck!"],
         ["The final trial: the Sky Bridge!", "Step on the floating tiles in ascending order, from 1 to 7."]
     ];
     showDialogue(levelIntros[levelIndex], () => {
@@ -2594,7 +3064,7 @@ function startLevel(levelIndex) {
                 currentLevelInstance = new IceFieldLevel();
                 break;
             case 3:
-                currentLevelInstance = new CipherStonesLevel();
+                currentLevelInstance = new GoblinGrottoLevel();
                 break;
             case 4:
                 currentLevelInstance = new SkyBridgeLevel();
@@ -3049,6 +3519,16 @@ function jumpToLevelEnd(levelIndex) {
                         startLevel(gameState.currentLevel);
                     }
                 );
+            } else if (gameState.currentLevel === 4) {
+                // After level 4, before level 5: Goblin Grotto -> Sky Bridge
+                showMapTransition(
+                    { x: 0.75, y: 0.5 },  // Goblin Grotto (right, middle)
+                    { x: 0.5, y: 0.2 },   // Sky Bridge (center top, in the sky)
+                    'Sky Bridge',
+                    () => {
+                        startLevel(gameState.currentLevel);
+                    }
+                );
             } else {
                 startLevel(gameState.currentLevel);
             }
@@ -3087,3 +3567,4 @@ document.querySelectorAll('.admin-button').forEach(button => {
         }
     });
 });
+

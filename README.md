@@ -10,11 +10,11 @@ Join Frostwaddle on an epic quest through five unique winter trials to find his 
 
 - **Pixel-art aesthetic** with a cozy winter theme
 - **Five unique puzzle levels**, each with different mechanics:
-  1. **Watermelon Wasteland** - Aim and shoot paper balls into a hoop
-  2. **Orchard of Oddities** - Catch winter items while avoiding summer ones
-  3. **Mirror Meadow** - Rotate mirrors to reflect a light beam to the target
-  4. **Cipher Stones** - Select the correct glowing stones in a logic puzzle
-  5. **Sky Bridge** - Step on floating tiles in the correct sequence
+  1. **Jollygut Hollow** - Feed the hungry hippo by shooting watermelons with a slingshot
+  2. **Frozen Forest** - Navigate through falling branches and ice patches
+  3. **The Frozen Reach** - Cross the frozen river by stepping on safe ice blocks
+  4. **Goblin Grotto** - Aim your torch and bounce firelight off moving ice crystals to melt the ice goblin
+  5. **Sky Bridge** - Step on floating tiles in the correct ascending sequence
 - **Rune Collection System** - Earn magical runes after each trial
 - **Final Gate Challenge** - Use your collected runes to unlock the ending
 - **Whimsical dialogue** from your Winter Spirit guide
@@ -52,25 +52,26 @@ npm run watch
 
 ## 🎯 Game Controls
 
-### Level 1: Watermelon Wasteland
-- **Click and hold** to charge your shot
-- **Move mouse** to aim
-- **Release** to shoot paper balls into the hoop
+### Level 1: Jollygut Hollow
+- **Click and hold** to charge your slingshot
+- **Move mouse** to aim at the hippo's mouth
+- **Release** to shoot watermelons
+- Feed the hippo to win!
 
-### Level 2: Orchard of Oddities
-- **Move mouse** to control the basket
-- Catch winter items: ⭐ ❄️ 🎄 🎁 ✨
-- Avoid summer items: 🔥 ☀️ 🌵 🦂 💥
+### Level 2: Frozen Forest
+- **Arrow Keys**: ← to slow down, → to speed up, ↑ to jump
+- Dodge falling tree branches and ice patches
+- Reach the end of the forest safely
 
-### Level 3: Mirror Meadow
-- **Click** on a mirror to select it
-- **Drag mouse** to rotate the mirror
-- Reflect the light beam to hit the red target
+### Level 3: The Frozen Reach
+- **Click** on ice blocks to step on them
+- Only step on safe ice (it will crack and reveal itself)
+- Cross the frozen river without falling through
 
-### Level 4: Cipher Stones
-- **Click** on stones to select/deselect them
-- Choose all solid glyphs (filled symbols)
-- Avoid hollow glyphs (outline symbols)
+### Level 4: Goblin Grotto
+- **Move mouse** to aim your torch
+- **Click** to fire a fireball
+- Bounce firelight off moving ice crystals to hit the ice goblin
 
 ### Level 5: Sky Bridge
 - **Click** on tiles to step on them
