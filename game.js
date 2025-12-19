@@ -117,6 +117,61 @@ let icePatchLoaded = false;
 icePatchImage.onload = () => {
     icePatchLoaded = true;
 };
+// Runic Tower level images
+const dungeonBackgroundImage = new Image();
+dungeonBackgroundImage.src = 'dungeon-background.png';
+let dungeonBackgroundLoaded = false;
+dungeonBackgroundImage.onload = () => {
+    dungeonBackgroundLoaded = true;
+};
+const columnImage = new Image();
+columnImage.src = 'column.png';
+let columnLoaded = false;
+columnImage.onload = () => {
+    columnLoaded = true;
+};
+// Base sprite images (without transport)
+const yetiImage = new Image();
+yetiImage.src = 'yeti.png';
+const bearImage = new Image();
+bearImage.src = 'bear.png';
+const penguinImage = new Image();
+penguinImage.src = 'penguin.png';
+// Hat images
+const hatNormalImage = new Image();
+hatNormalImage.src = 'hat-normal.png';
+const hatVikingImage = new Image();
+hatVikingImage.src = 'hat-viking.png';
+const hatPlaidImage = new Image();
+hatPlaidImage.src = 'hat-plaid.png';
+// Serpent images - directional
+// Head images
+const serpentHeadUpImage = new Image();
+serpentHeadUpImage.src = 'serpent-head-up.png';
+const serpentHeadDownImage = new Image();
+serpentHeadDownImage.src = 'serpent-head-down.png';
+const serpentHeadLeftImage = new Image();
+serpentHeadLeftImage.src = 'serpent-head-left.png';
+const serpentHeadRightImage = new Image();
+serpentHeadRightImage.src = 'serpent-head-right.png';
+// Body images
+const serpentBodyUpImage = new Image();
+serpentBodyUpImage.src = 'serpent-body-up.png';
+const serpentBodyDownImage = new Image();
+serpentBodyDownImage.src = 'serpent-body-down.png';
+const serpentBodyLeftImage = new Image();
+serpentBodyLeftImage.src = 'serpent-body-left.png';
+const serpentBodyRightImage = new Image();
+serpentBodyRightImage.src = 'serpent-body-right.png';
+// Tail images
+const serpentTailUpImage = new Image();
+serpentTailUpImage.src = 'serpent-tail-up.png';
+const serpentTailDownImage = new Image();
+serpentTailDownImage.src = 'serpent-tail-down.png';
+const serpentTailLeftRightImage = new Image();
+serpentTailLeftRightImage.src = 'serpent-tail-left-right.png';
+const serpentTailRightImage = new Image();
+serpentTailRightImage.src = 'serpent-tail-right.png';
 const treeLogBackImage = new Image();
 treeLogBackImage.src = 'tree-log-back.png';
 let treeLogBackLoaded = false;
@@ -516,7 +571,7 @@ const creditsLines = [
     'The Frozen Forest',
     'The Frozen Reach',
     'The Goblin Grotto',
-    'The Sky Bridge',
+    'The Runic Tower',
     '',
     '',
     'THANK YOU FOR PLAYING!',
@@ -694,7 +749,7 @@ function drawDialogueScreen() {
                 backgroundImage = runeNImage;
                 imageLoaded = runeNLoaded;
                 break;
-            case 4: // Level 5 - Sky Bridge
+            case 4: // Level 5 - The Runic Tower
                 backgroundImage = runeAImage;
                 imageLoaded = runeALoaded;
                 break;
@@ -874,11 +929,11 @@ function completeLevel() {
                 );
             }
             else if (gameState.currentLevel === 4) {
-                // After level 4, before level 5: Goblin Grotto -> Sky Bridge
+                // After level 4, before level 5: Goblin Grotto -> The Runic Tower
                 showMapTransition(
                     { x: 0.75, y: 0.5 },  // Goblin Grotto (right, middle)
-                    { x: 0.5, y: 0.2 },   // Sky Bridge (center top, in the sky)
-                    'Sky Bridge',
+                    { x: 0.5, y: 0.2 },   // The Runic Tower (center top, in the sky)
+                    'The Runic Tower',
                     () => {
                         startLevel(gameState.currentLevel);
                     }
@@ -2931,97 +2986,499 @@ class GoblinGrottoLevel {
     }
 }
 // ===================
-// LEVEL 5: Sky Bridge
-// ===================
-class SkyBridgeLevel {
+// LEVEL 5: The Runic Tower
+// =========================
+class RunicTowerLevel {
     constructor() {
-        this.tiles = [
-            { x: 100, y: 500, number: 1, active: false },
-            { x: 200, y: 450, number: 5, active: false },
-            { x: 300, y: 400, number: 2, active: false },
-            { x: 400, y: 350, number: 4, active: false },
-            { x: 500, y: 300, number: 3, active: false },
-            { x: 600, y: 250, number: 6, active: false },
-            { x: 700, y: 200, number: 7, active: false }
+        // Grid settings
+        this.gridCols = 15;
+        this.gridRows = 11;
+        this.tileSize = 40;
+        this.gridStartX = 100;
+        this.gridStartY = 100;
+        
+        // Player position (grid coordinates)
+        this.playerCol = 1;
+        this.playerRow = 1;
+        
+        // Dragon (snake) state - starts 2 tiles behind player
+        this.dragon = {
+            segments: [
+                { col: 1, row: 3 },  // head (2 tiles below player)
+                { col: 1, row: 4 },  // body
+                { col: 1, row: 5 }   // tail
+            ],
+            defeated: false,
+            frozenAnimation: 0
+        };
+        
+        // Pillars (static obstacles) - 6 columns evenly spaced
+        this.pillars = [
+            { col: 3, row: 2 },
+            { col: 7, row: 2 },
+            { col: 11, row: 2 },
+            { col: 3, row: 8 },
+            { col: 7, row: 8 },
+            { col: 11, row: 8 }
         ];
-        this.sequence = [];
-        this.correctSequence = [1, 2, 3, 4, 5, 6, 7];
-        canvas.addEventListener('click', this.clickTile.bind(this));
+        
+        // Eggs on the grid
+        this.eggs = [];
+        
+        // Movement control
+        this.moveDelay = 0;
+        this.moveDelayMax = 8; // Frames between moves
+        this.turnBased = true; // Player moves, then dragon moves
+        this.canMove = true;
+        
+        // Visual feedback
+        this.wrappedPillars = new Set();
+        this.glowAnimation = 0;
+        
+        // Track player's position history for dragon to follow (stays 2 tiles behind)
+        // Initialize with positions as if player moved from (1,3) -> (1,2) -> (1,1)
+        this.playerHistory = [
+            { col: 1, row: 3 },  // 2 moves ago (where dragon head is)
+            { col: 1, row: 2 },  // 1 move ago
+            { col: 1, row: 1 }   // current position
+        ];
+        
+        // Bind keyboard
+        this.keyDownHandler = this.handleKeyDown.bind(this);
+        window.addEventListener('keydown', this.keyDownHandler);
     }
-    clickTile(e) {
-        if (gameState.gamePhase !== 'playing')
+    
+    handleKeyDown(e) {
+        if (!this.canMove || gameState.gamePhase !== 'playing' || this.dragon.defeated) return;
+        if (this.moveDelay > 0) return;
+        
+        let newCol = this.playerCol;
+        let newRow = this.playerRow;
+        let moved = false;
+        let moveCol = 0;
+        let moveRow = 0;
+        
+        // Arrow key movement
+        if (e.key === 'ArrowUp') {
+            newRow--;
+            moveRow = -1;
+            moved = true;
+        } else if (e.key === 'ArrowDown') {
+            newRow++;
+            moveRow = 1;
+            moved = true;
+        } else if (e.key === 'ArrowLeft') {
+            newCol--;
+            moveCol = -1;
+            moved = true;
+        } else if (e.key === 'ArrowRight') {
+            newCol++;
+            moveCol = 1;
+            moved = true;
+        } else if (e.key === ' ' || e.key === 'Spacebar') {
+            // Drop egg at current location
+            e.preventDefault();
+            this.dropEgg();
             return;
-        const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        this.tiles.forEach(tile => {
-            const dx = mouseX - tile.x;
-            const dy = mouseY - tile.y;
-            if (Math.abs(dx) < 40 && Math.abs(dy) < 20) {
-                if (!tile.active) {
-                    tile.active = true;
-                    this.sequence.push(tile.number);
-                    this.checkSequence();
-                }
-            }
-        });
-    }
-    checkSequence() {
-        // Check if current sequence matches correct sequence so far
-        for (let i = 0; i < this.sequence.length; i++) {
-            if (this.sequence[i] !== this.correctSequence[i]) {
-                // Wrong! Reset
-                this.sequence = [];
-                this.tiles.forEach(tile => tile.active = false);
+        } else {
+            return;
+        }
+        
+        if (moved) {
+            e.preventDefault();
+            
+            // Check bounds
+            if (newCol < 0 || newCol >= this.gridCols || newRow < 0 || newRow >= this.gridRows) {
                 return;
             }
+            
+            // Check collision with pillars
+            if (this.isPillar(newCol, newRow)) {
+                return;
+            }
+            
+            // Check collision with dragon (any segment) - restart level if hit
+            if (this.isDragonSegment(newCol, newRow)) {
+                this.restartLevel();
+                return;
+            }
+            
+            // Move player
+            this.playerCol = newCol;
+            this.playerRow = newRow;
+            this.moveDelay = this.moveDelayMax;
+            
+            // Add new position to history
+            this.playerHistory.push({ col: newCol, row: newRow });
+            
+            // After player moves, dragon moves
+            this.moveDragon();
         }
-        // Check if complete
-        if (this.sequence.length === this.correctSequence.length) {
+    }
+    
+    dropEgg() {
+        // Can only drop egg on current tile if no egg already there
+        const existingEgg = this.eggs.find(e => e.col === this.playerCol && e.row === this.playerRow);
+        if (!existingEgg) {
+            this.eggs.push({ col: this.playerCol, row: this.playerRow });
+        }
+    }
+    
+    moveDragon() {
+        if (this.dragon.defeated) return;
+        
+        // Dragon follows player's path, staying 2 tiles behind
+        // Need at least 3 positions in history to stay 2 behind
+        if (this.playerHistory.length < 3) {
+            return; // Not enough history yet, dragon waits
+        }
+        
+        // Get the position from 2 moves ago (current is last, -1 is 1 behind, -2 is 2 behind)
+        const targetPosition = this.playerHistory[this.playerHistory.length - 3];
+        let newCol = targetPosition.col;
+        let newRow = targetPosition.row;
+        
+        const head = this.dragon.segments[0];
+        
+        // Check if dragon is already at the target (shouldn't happen normally)
+        if (head.col === newCol && head.row === newRow) {
+            return;
+        }
+        
+        // Check collision with pillar (shouldn't happen if following player path)
+        if (this.isPillar(newCol, newRow)) {
+            return; // Can't move into pillar
+        }
+        
+        // Check collision with own body (dragon wraps into itself)
+        if (this.isDragonSegment(newCol, newRow)) {
+            return; // Can't move into own body
+        }
+        
+        // Check if dragon eats an egg
+        const eggIndex = this.eggs.findIndex(e => e.col === newCol && e.row === newRow);
+        if (eggIndex !== -1) {
+            // Remove egg and grow dragon by 2 segments
+            this.eggs.splice(eggIndex, 1);
+            // Dragon grows: add 2 new tail segments at the current tail position
+            const tail = this.dragon.segments[this.dragon.segments.length - 1];
+            this.dragon.segments.push({ col: tail.col, row: tail.row });
+            this.dragon.segments.push({ col: tail.col, row: tail.row });
+        }
+        
+        // Move dragon: each segment moves to the position of the segment before it
+        for (let i = this.dragon.segments.length - 1; i > 0; i--) {
+            this.dragon.segments[i].col = this.dragon.segments[i - 1].col;
+            this.dragon.segments[i].row = this.dragon.segments[i - 1].row;
+        }
+        
+        // Move head to new position
+        this.dragon.segments[0].col = newCol;
+        this.dragon.segments[0].row = newRow;
+        
+        // Check if dragon caught player
+        if (newCol === this.playerCol && newRow === this.playerRow) {
+            this.restartLevel();
+            return;
+        }
+        
+        // Check if dragon is wrapped around enough pillars
+        this.checkDragonWrapping();
+    }
+    
+    checkDragonWrapping() {
+        // For each pillar, check if it's wrapped by the dragon
+        this.wrappedPillars.clear();
+        
+        for (const pillar of this.pillars) {
+            if (this.isPillarWrapped(pillar)) {
+                this.wrappedPillars.add(pillar);
+            }
+        }
+        
+        // If 3 or more pillars are wrapped, dragon is defeated - complete level!
+        if (this.wrappedPillars.size >= 3 && !this.dragon.defeated) {
+            this.dragon.defeated = true;
+            // Auto-complete the level
             this.cleanup();
             completeLevel();
         }
     }
-    update() { }
+    
+    isPillarWrapped(pillar) {
+        // A pillar is "wrapped" if two or more dragon segments are adjacent to it
+        // Check the 4 orthogonal positions around the pillar
+        const adjacentPositions = [
+            { col: pillar.col - 1, row: pillar.row },
+            { col: pillar.col + 1, row: pillar.row },
+            { col: pillar.col, row: pillar.row - 1 },
+            { col: pillar.col, row: pillar.row + 1 }
+        ];
+        
+        let adjacentSegmentCount = 0;
+        for (const pos of adjacentPositions) {
+            if (this.isDragonSegment(pos.col, pos.row)) {
+                adjacentSegmentCount++;
+            }
+        }
+        
+        // Need at least 2 segments adjacent to count as wrapped
+        return adjacentSegmentCount >= 2;
+    }
+    
+    isPillar(col, row) {
+        return this.pillars.some(p => p.col === col && p.row === row);
+    }
+    
+    isDragonSegment(col, row) {
+        return this.dragon.segments.some(s => s.col === col && s.row === row);
+    }
+    
+    isDragonBody(col, row) {
+        // Check if position is a dragon body segment (not the head)
+        for (let i = 1; i < this.dragon.segments.length; i++) {
+            if (this.dragon.segments[i].col === col && this.dragon.segments[i].row === row) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    restartLevel() {
+        // Reset player
+        this.playerCol = 1;
+        this.playerRow = 1;
+        this.playerHistory = [
+            { col: 1, row: 3 },  // 2 moves ago (where dragon head is)
+            { col: 1, row: 2 },  // 1 move ago
+            { col: 1, row: 1 }   // current position
+        ];
+        
+        // Reset dragon - starts 2 tiles behind player
+        this.dragon.segments = [
+            { col: 1, row: 3 },  // head (2 tiles below player)
+            { col: 1, row: 4 },  // body
+            { col: 1, row: 5 }   // tail
+        ];
+        this.dragon.defeated = false;
+        
+        // Clear eggs
+        this.eggs = [];
+        
+        // Clear wrapped pillars
+        this.wrappedPillars.clear();
+    }
+    
+    update() {
+        if (this.moveDelay > 0) {
+            this.moveDelay--;
+        }
+        
+        // Animate glow for wrapped pillars
+        this.glowAnimation = (this.glowAnimation + 0.1) % (Math.PI * 2);
+        
+        // Animate defeated dragon
+        if (this.dragon.defeated) {
+            this.dragon.frozenAnimation++;
+        }
+    }
+    
     draw() {
-        ctx.fillStyle = '#a8d0e6';
-        ctx.fillRect(0, 0, 800, 600);
-        // Clouds
-        for (let i = 0; i < 5; i++) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        // Draw dungeon background
+        if (dungeonBackgroundLoaded) {
+            ctx.drawImage(dungeonBackgroundImage, 0, 0, 800, 600);
+        } else {
+            // Fallback dark background
+            ctx.fillStyle = '#2a2a3e';
+            ctx.fillRect(0, 0, 800, 600);
+        }
+        
+        // Draw title
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '16px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.fillText('The Runic Tower', 400, 40);
+        ctx.font = '8px "Press Start 2P"';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('Dragon follows 2 tiles behind! Entangle it around 3 columns!', 400, 60);
+        ctx.fillText('Arrows: Move | Space: Drop Egg', 400, 75);
+        
+        // Draw columns (pillars)
+        for (const pillar of this.pillars) {
+            const x = this.gridStartX + pillar.col * this.tileSize;
+            const y = this.gridStartY + pillar.row * this.tileSize;
+            
+            const isWrapped = this.wrappedPillars.has(pillar);
+            
+            // Draw column image
+            if (columnLoaded) {
+                ctx.drawImage(columnImage, x, y, this.tileSize, this.tileSize);
+            } else {
+                // Fallback pillar rendering
+                ctx.fillStyle = '#696969';
+                ctx.fillRect(x + 5, y + 5, this.tileSize - 10, this.tileSize - 10);
+            }
+            
+            // Glow effect for wrapped pillars
+            if (isWrapped) {
+                const glowIntensity = Math.sin(this.glowAnimation) * 0.3 + 0.7;
+                ctx.strokeStyle = `rgba(255, 215, 0, ${glowIntensity})`;
+                ctx.lineWidth = 4;
+                ctx.strokeRect(x, y, this.tileSize, this.tileSize);
+            }
+        }
+        
+        // Draw eggs
+        for (const egg of this.eggs) {
+            const x = this.gridStartX + egg.col * this.tileSize;
+            const y = this.gridStartY + egg.row * this.tileSize;
+            
+            ctx.fillStyle = '#f5f5dc';
             ctx.beginPath();
-            ctx.arc(i * 200 - 50, 100 + i * 30, 40, 0, Math.PI * 2);
-            ctx.arc(i * 200, 90 + i * 30, 50, 0, Math.PI * 2);
-            ctx.arc(i * 200 + 50, 100 + i * 30, 40, 0, Math.PI * 2);
+            ctx.ellipse(x + this.tileSize / 2, y + this.tileSize / 2, 8, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = '#d3d3d3';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+        
+        // Draw serpent
+        for (let i = this.dragon.segments.length - 1; i >= 0; i--) {
+            const segment = this.dragon.segments[i];
+            const x = this.gridStartX + segment.col * this.tileSize;
+            const y = this.gridStartY + segment.row * this.tileSize;
+            
+            const isHead = i === 0;
+            const isTail = i === this.dragon.segments.length - 1;
+            
+            // Determine direction and which image to use
+            let serpentImage;
+            
+            if (isHead) {
+                // Head: determine direction by looking at segment behind it
+                if (this.dragon.segments.length > 1) {
+                    const nextSegment = this.dragon.segments[1];
+                    if (segment.row < nextSegment.row) {
+                        serpentImage = serpentHeadUpImage;
+                    } else if (segment.row > nextSegment.row) {
+                        serpentImage = serpentHeadDownImage;
+                    } else if (segment.col < nextSegment.col) {
+                        serpentImage = serpentHeadLeftImage;
+                    } else if (segment.col > nextSegment.col) {
+                        serpentImage = serpentHeadRightImage;
+                    } else {
+                        serpentImage = serpentHeadRightImage; // default
+                    }
+                } else {
+                    serpentImage = serpentHeadRightImage; // default for single segment
+                }
+            } else if (isTail) {
+                // Tail: determine direction by looking at segment in front of it
+                const prevSegment = this.dragon.segments[i - 1];
+                if (segment.row < prevSegment.row) {
+                    serpentImage = serpentTailDownImage;
+                } else if (segment.row > prevSegment.row) {
+                    serpentImage = serpentTailUpImage;
+                } else if (segment.col < prevSegment.col) {
+                    serpentImage = serpentTailRightImage;
+                } else if (segment.col > prevSegment.col) {
+                    serpentImage = serpentTailLeftRightImage;
+                } else {
+                    serpentImage = serpentTailLeftRightImage; // default
+                }
+            } else {
+                // Body: determine direction by looking at segment in front of it (towards head)
+                const prevSegment = this.dragon.segments[i - 1];
+                
+                if (segment.row < prevSegment.row) {
+                    // Body segment is above the previous one, facing down
+                    serpentImage = serpentBodyDownImage;
+                } else if (segment.row > prevSegment.row) {
+                    // Body segment is below the previous one, facing up
+                    serpentImage = serpentBodyUpImage;
+                } else if (segment.col < prevSegment.col) {
+                    // Body segment is left of the previous one, facing right
+                    serpentImage = serpentBodyRightImage;
+                } else if (segment.col > prevSegment.col) {
+                    // Body segment is right of the previous one, facing left
+                    serpentImage = serpentBodyLeftImage;
+                } else {
+                    // Default fallback
+                    serpentImage = serpentBodyRightImage;
+                }
+            }
+            
+            // Apply defeated effect
+            if (this.dragon.defeated) {
+                ctx.globalAlpha = 0.5;
+            } else {
+                ctx.globalAlpha = 1.0;
+            }
+            
+            // Draw serpent segment
+            if (serpentImage && serpentImage.complete) {
+                ctx.drawImage(serpentImage, x, y, this.tileSize, this.tileSize);
+            } else {
+                // Fallback rendering
+                ctx.fillStyle = isHead ? '#dc143c' : '#8b0000';
+                ctx.fillRect(x + 6, y + 6, this.tileSize - 12, this.tileSize - 12);
+            }
+            
+            ctx.globalAlpha = 1.0;
+        }
+        
+        // Draw player (sprite + hat)
+        const playerX = this.gridStartX + this.playerCol * this.tileSize;
+        const playerY = this.gridStartY + this.playerRow * this.tileSize;
+        
+        // Get selected sprite image
+        let spriteImage;
+        if (gameState.selectedCharacter === 'yeti') {
+            spriteImage = yetiImage;
+        } else if (gameState.selectedCharacter === 'bear') {
+            spriteImage = bearImage;
+        } else if (gameState.selectedCharacter === 'penguin') {
+            spriteImage = penguinImage;
+        }
+        
+        // Get selected hat image
+        let hatImage;
+        if (gameState.selectedHat === 'hat-normal') {
+            hatImage = hatNormalImage;
+        } else if (gameState.selectedHat === 'hat-viking') {
+            hatImage = hatVikingImage;
+        } else if (gameState.selectedHat === 'hat-plaid') {
+            hatImage = hatPlaidImage;
+        }
+        
+        // Draw sprite
+        if (spriteImage && spriteImage.complete) {
+            ctx.drawImage(spriteImage, playerX, playerY, this.tileSize, this.tileSize);
+        } else {
+            // Fallback blue dot
+            ctx.fillStyle = '#4169e1';
+            ctx.beginPath();
+            ctx.arc(playerX + this.tileSize / 2, playerY + this.tileSize / 2, 12, 0, Math.PI * 2);
             ctx.fill();
         }
-        // Title
-        ctx.fillStyle = '#2d4563';
-        ctx.font = '20px "Press Start 2P"';
-        ctx.textAlign = 'center';
-        ctx.fillText('Sky Bridge', 400, 40);
+        
+        // Draw hat on top
+        if (hatImage && hatImage.complete) {
+            ctx.drawImage(hatImage, playerX, playerY, this.tileSize, this.tileSize);
+        }
+        
+        // Stats
+        ctx.fillStyle = '#ffffff';
         ctx.font = '10px "Press Start 2P"';
-        ctx.fillText('Step on tiles in ascending order (1-7)', 400, 70);
-        // Tiles
-        this.tiles.forEach(tile => {
-            ctx.fillStyle = tile.active ? '#4ade80' : '#6dd5ed';
-            ctx.fillRect(tile.x - 40, tile.y - 20, 80, 40);
-            ctx.strokeStyle = '#2d4563';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(tile.x - 40, tile.y - 20, 80, 40);
-            ctx.fillStyle = '#2d4563';
-            ctx.font = '24px "Press Start 2P"';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(tile.number.toString(), tile.x, tile.y);
-        });
-        // Progress
-        ctx.fillStyle = '#2d4563';
-        ctx.font = '12px "Press Start 2P"';
-        ctx.fillText(`Steps: ${this.sequence.length}/${this.correctSequence.length}`, 400, 560);
+        ctx.textAlign = 'left';
+        ctx.fillText(`Dragon Length: ${this.dragon.segments.length}`, 20, 540);
+        ctx.fillText(`Wrapped Columns: ${this.wrappedPillars.size}/3`, 20, 560);
+        ctx.fillText(`Eggs: ${this.eggs.length}`, 20, 580);
     }
+    
     cleanup() {
-        canvas.removeEventListener('click', this.clickTile.bind(this));
+        window.removeEventListener('keydown', this.keyDownHandler);
     }
 }
 // Level management
@@ -3049,7 +3506,7 @@ function startLevel(levelIndex) {
         ["You have reached the Frozen Forest!", "The journey is quick, but be warned...", "It is covered with treacherous ice patches and falling tree branches, which you must avoid.", "Use Arrow Keys: ← to slow down, → to speed up, ↑ to jump."],
         ["The Frozen Reach is ahead!", "You must cross the icy river. Yet not all ice is sworn to hold. Winter reveals its cracks only once.", "Those who rush will not see it. Step where the ice remembers its strength."],
         ["You stand at the treshold of Goblin Grotto!", "Dark and frost-bound creatures lurk behind stone enclosures deep within these caves. Only the warmth of true light may undo them.", "Floating ice crystals cling to the cavern walls. Take up my torch, and guide your firelight to shatter the goblins. Good luck!"],
-        ["The final trial: the Sky Bridge!", "Step on the floating tiles in ascending order, from 1 to 7."]
+        ["The final trial: The Runic Tower!", "A dragon serpent guards the exit. It follows your exact path, staying 2 tiles behind.", "Drop eggs to make it grow. Entangle it around three columns to trap it forever."]
     ];
     showDialogue(levelIntros[levelIndex], () => {
         gameState.gamePhase = 'playing';
@@ -3067,7 +3524,7 @@ function startLevel(levelIndex) {
                 currentLevelInstance = new GoblinGrottoLevel();
                 break;
             case 4:
-                currentLevelInstance = new SkyBridgeLevel();
+                currentLevelInstance = new RunicTowerLevel();
                 break;
         }
     });
@@ -3520,11 +3977,11 @@ function jumpToLevelEnd(levelIndex) {
                     }
                 );
             } else if (gameState.currentLevel === 4) {
-                // After level 4, before level 5: Goblin Grotto -> Sky Bridge
+                // After level 4, before level 5: Goblin Grotto -> The Runic Tower
                 showMapTransition(
                     { x: 0.75, y: 0.5 },  // Goblin Grotto (right, middle)
-                    { x: 0.5, y: 0.2 },   // Sky Bridge (center top, in the sky)
-                    'Sky Bridge',
+                    { x: 0.5, y: 0.2 },   // The Runic Tower (center top, in the sky)
+                    'The Runic Tower',
                     () => {
                         startLevel(gameState.currentLevel);
                     }
