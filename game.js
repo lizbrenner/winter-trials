@@ -63,6 +63,12 @@ let goblinGrottoBackgroundLoaded = false;
 goblinGrottoBackgroundImage.onload = () => {
     goblinGrottoBackgroundLoaded = true;
 };
+const dungeonDialogueBackgroundImage = new Image();
+dungeonDialogueBackgroundImage.src = 'dungeon-dialog-background.png';
+let dungeonDialogueBackgroundLoaded = false;
+dungeonDialogueBackgroundImage.onload = () => {
+    dungeonDialogueBackgroundLoaded = true;
+};
 const iceGoblinImage = new Image();
 iceGoblinImage.src = 'ice-goblin-above.png';
 let iceGoblinLoaded = false;
@@ -163,6 +169,23 @@ const serpentBodyLeftImage = new Image();
 serpentBodyLeftImage.src = 'serpent-body-left.png';
 const serpentBodyRightImage = new Image();
 serpentBodyRightImage.src = 'serpent-body-right.png';
+// Corner images
+const serpentCornerUpLeftImage = new Image();
+serpentCornerUpLeftImage.src = 'serpent-corner-up-left.png';
+const serpentCornerUpRightImage = new Image();
+serpentCornerUpRightImage.src = 'serpent-corner-up-right.png';
+const serpentCornerDownLeftImage = new Image();
+serpentCornerDownLeftImage.src = 'serpent-corner-down-left.png';
+const serpentCornerDownRightImage = new Image();
+serpentCornerDownRightImage.src = 'serpent-corner-down-right.png';
+const serpentCornerLeftLeftImage = new Image();
+serpentCornerLeftLeftImage.src = 'serpent-corner-left-left.png';
+const serpentCornerLeftRightImage = new Image();
+serpentCornerLeftRightImage.src = 'serpent-corner-left-right.png';
+const serpentCornerRightLeftImage = new Image();
+serpentCornerRightLeftImage.src = 'serpent-corner-right-left.png';
+const serpentCornerRightRightImage = new Image();
+serpentCornerRightRightImage.src = 'serpent-corner-right-right.png';
 // Tail images
 const serpentTailUpImage = new Image();
 serpentTailUpImage.src = 'serpent-tail-up.png';
@@ -773,6 +796,10 @@ function drawDialogueScreen() {
     else if (currentDialogueBackground === 'level4' && goblinGrottoBackgroundLoaded) {
         backgroundImage = goblinGrottoBackgroundImage;
         imageLoaded = goblinGrottoBackgroundLoaded;
+    }
+    else if (currentDialogueBackground === 'level5' && dungeonDialogueBackgroundLoaded) {
+        backgroundImage = dungeonDialogueBackgroundImage;
+        imageLoaded = dungeonDialogueBackgroundLoaded;
     }
     else if (currentDialogueBackground === 'complete' && mangoAndHippoLoaded) {
         backgroundImage = mangoAndHippoImage;
@@ -3388,24 +3415,59 @@ class RunicTowerLevel {
                     serpentImage = serpentTailLeftRightImage; // default
                 }
             } else {
-                // Body: determine direction by looking at segment in front of it (towards head)
+                // Body: check if this is a corner piece or straight segment
                 const prevSegment = this.dragon.segments[i - 1];
+                const nextSegment = this.dragon.segments[i + 1];
                 
-                if (segment.row < prevSegment.row) {
-                    // Body segment is above the previous one, facing down
-                    serpentImage = serpentBodyDownImage;
-                } else if (segment.row > prevSegment.row) {
-                    // Body segment is below the previous one, facing up
-                    serpentImage = serpentBodyUpImage;
-                } else if (segment.col < prevSegment.col) {
-                    // Body segment is left of the previous one, facing right
-                    serpentImage = serpentBodyRightImage;
-                } else if (segment.col > prevSegment.col) {
-                    // Body segment is right of the previous one, facing left
-                    serpentImage = serpentBodyLeftImage;
+                // Determine direction the serpent was TRAVELING (from next to current)
+                let comingFrom = '';
+                if (segment.row < nextSegment.row) comingFrom = 'up';      // came from below (moving up)
+                else if (segment.row > nextSegment.row) comingFrom = 'down'; // came from above (moving down)
+                else if (segment.col < nextSegment.col) comingFrom = 'left';  // came from right (moving left)
+                else if (segment.col > nextSegment.col) comingFrom = 'right'; // came from left (moving right)
+                
+                // Determine direction the serpent is GOING (from current to previous)
+                let goingTo = '';
+                if (prevSegment.row < segment.row) goingTo = 'up';      // going up
+                else if (prevSegment.row > segment.row) goingTo = 'down'; // going down
+                else if (prevSegment.col < segment.col) goingTo = 'left';  // going left
+                else if (prevSegment.col > segment.col) goingTo = 'right'; // going right
+                
+                // Check if this is a corner (direction changes)
+                if (comingFrom !== goingTo && comingFrom && goingTo) {
+                    // This is a corner piece
+                    // Map based on: moving [direction] then turns [left/right]
+                    
+                    // Moving right then turns left (up) or right (down)
+                    if (comingFrom === 'right' && goingTo === 'up') serpentImage = serpentCornerRightLeftImage;
+                    else if (comingFrom === 'right' && goingTo === 'down') serpentImage = serpentCornerRightRightImage;
+                    
+                    // Moving down then turns left (right) or right (left)
+                    else if (comingFrom === 'down' && goingTo === 'right') serpentImage = serpentCornerDownLeftImage;
+                    else if (comingFrom === 'down' && goingTo === 'left') serpentImage = serpentCornerDownRightImage;
+                    
+                    // Moving left then turns left (down) or right (up)
+                    else if (comingFrom === 'left' && goingTo === 'down') serpentImage = serpentCornerLeftLeftImage;
+                    else if (comingFrom === 'left' && goingTo === 'up') serpentImage = serpentCornerLeftRightImage;
+                    
+                    // Moving up then turns left (left) or right (right)
+                    else if (comingFrom === 'up' && goingTo === 'left') serpentImage = serpentCornerUpLeftImage;
+                    else if (comingFrom === 'up' && goingTo === 'right') serpentImage = serpentCornerUpRightImage;
+                    
+                    else {
+                        // Fallback to straight body piece
+                        if (comingFrom === 'up') serpentImage = serpentBodyUpImage;
+                        else if (comingFrom === 'down') serpentImage = serpentBodyDownImage;
+                        else if (comingFrom === 'left') serpentImage = serpentBodyLeftImage;
+                        else serpentImage = serpentBodyRightImage;
+                    }
                 } else {
-                    // Default fallback
-                    serpentImage = serpentBodyRightImage;
+                    // Straight segment - use regular body piece based on travel direction
+                    if (comingFrom === 'up') serpentImage = serpentBodyUpImage;
+                    else if (comingFrom === 'down') serpentImage = serpentBodyDownImage;
+                    else if (comingFrom === 'left') serpentImage = serpentBodyLeftImage;
+                    else if (comingFrom === 'right') serpentImage = serpentBodyRightImage;
+                    else serpentImage = serpentBodyRightImage; // default
                 }
             }
             
@@ -3497,6 +3559,9 @@ function startLevel(levelIndex) {
     }
     else if (levelIndex === 3) {
         currentDialogueBackground = 'level4'; // Use Goblin Grotto background
+    }
+    else if (levelIndex === 4) {
+        currentDialogueBackground = 'level5'; // Use Dungeon dialogue background
     }
     else {
         currentDialogueBackground = 'intro'; // Use hippo-hero for other levels
