@@ -369,6 +369,24 @@ const endCreditsMusic = new Audio('end-credits-music.mp3');
 endCreditsMusic.loop = true;
 endCreditsMusic.volume = 0.4; // 40% volume
 endCreditsMusic.preload = 'auto'; // Preload the audio
+// Level 1 sound effects
+const watermelonEatSound = new Audio('watermelon-eat.mp3');
+watermelonEatSound.volume = 0.6;
+watermelonEatSound.preload = 'auto';
+const watermelonFailSound = new Audio('watermelon-fail.mp3');
+watermelonFailSound.volume = 0.6;
+watermelonFailSound.preload = 'auto';
+// Level 3 sound effects
+const iceCrackingSound = new Audio('ice-cracking.mp3');
+iceCrackingSound.volume = 0.6;
+iceCrackingSound.preload = 'auto';
+const splashEffectSound = new Audio('splash-effect.mp3');
+splashEffectSound.volume = 0.6;
+splashEffectSound.preload = 'auto';
+// Level 5 sound effects
+const snakeHissSound = new Audio('snake-hiss.mp3');
+snakeHissSound.volume = 0.5;
+snakeHissSound.preload = 'auto';
 let isMuted = false;
 let currentMusic = backgroundMusic; // Track which music is playing
 function startBackgroundMusic() {
@@ -1139,15 +1157,17 @@ function drawFinalGate() {
             ctx.textAlign = 'center';
             ctx.fillText('Collected Runes:', 400, 520);
             
-            // Draw the runes using parchment images
+            // Draw ALL 5 runes using parchment images - always show all of them
             const runeImageSize = 60;
             const runeSpacing = 15;
             const runeStartX = (canvas.width - (runeImageSize * 5 + runeSpacing * 4)) / 2;
             const runeY = 540;
             
-            for (let i = 0; i < gameState.runes.length; i++) {
+            // Always display all 5 runes in the order they were collected
+            const allRunes = ['O', 'G', 'M', 'N', 'A']; // All runes in collection order
+            for (let i = 0; i < allRunes.length; i++) {
                 const x = runeStartX + i * (runeImageSize + runeSpacing);
-                const runeLetter = gameState.runes[i];
+                const runeLetter = allRunes[i];
                 const runeImage = parchmentRuneImages[runeLetter];
                 
                 // Draw parchment rune image if loaded
@@ -1406,33 +1426,61 @@ class PaperWastelandLevel {
         // Update projectiles
         for (let i = this.projectiles.length - 1; i >= 0; i--) {
             const proj = this.projectiles[i];
+            
+            // Pre-check for ground collision sound (trigger before visual impact for responsiveness)
+            const watermelonRadius = 20; // Half of watermelon size (40px)
+            const groundY = 580;
+            if (!proj.groundSoundPlayed && proj.y + watermelonRadius >= groundY - 30) {
+                // Will hit ground soon - play sound now for better sync
+                if (!isMuted && this.hippoTarget.mouthOpen) { // Only if didn't hit hippo
+                    const failSound = watermelonFailSound.cloneNode();
+                    failSound.volume = 0.6;
+                    failSound.play().catch(err => console.log("Audio play failed:", err));
+                    proj.groundSoundPlayed = true;
+                }
+            }
+            
             proj.x += proj.vx;
             proj.y += proj.vy;
             proj.vy += 0.4; // gravity
             
-            // Check collision with hippo
+            // Check collision with hippo (with anticipation for sound)
+            const anticipation = 25; // pixels to anticipate collision for sound
             if (this.hippoTarget.mouthOpen &&
-                proj.x > this.hippoTarget.x && 
-                proj.x < this.hippoTarget.x + this.hippoTarget.width &&
-                proj.y > this.hippoTarget.y && 
-                proj.y < this.hippoTarget.y + this.hippoTarget.height) {
-                // Hit!
-                this.score++;
-                this.hippoTarget.mouthOpen = false;
-                this.hippoTarget.message = 'Yum, that was delicious!';
-                this.hippoTarget.messageTimer = 180; // Show message for 3 seconds
-                this.projectiles.splice(i, 1);
-                
-                if (this.score >= this.targetScore) {
-                    this.cleanup();
-                    completeLevel();
+                proj.x > this.hippoTarget.x - anticipation && 
+                proj.x < this.hippoTarget.x + this.hippoTarget.width + anticipation &&
+                proj.y > this.hippoTarget.y - anticipation && 
+                proj.y < this.hippoTarget.y + this.hippoTarget.height + anticipation) {
+                // Hit! Play sound immediately
+                if (!isMuted && !proj.hitSoundPlayed) {
+                    const eatSound = watermelonEatSound.cloneNode();
+                    eatSound.volume = 0.6;
+                    eatSound.play().catch(err => console.log("Audio play failed:", err));
+                    proj.hitSoundPlayed = true;
                 }
-                continue;
+                
+                // Only score if actually inside the hitbox
+                if (proj.x > this.hippoTarget.x && 
+                    proj.x < this.hippoTarget.x + this.hippoTarget.width &&
+                    proj.y > this.hippoTarget.y && 
+                    proj.y < this.hippoTarget.y + this.hippoTarget.height) {
+                    this.score++;
+                    this.hippoTarget.mouthOpen = false;
+                    this.hippoTarget.message = 'Yum, that was delicious!';
+                    this.hippoTarget.messageTimer = 180; // Show message for 3 seconds
+                    this.projectiles.splice(i, 1);
+                    
+                    if (this.score >= this.targetScore) {
+                        this.cleanup();
+                        completeLevel();
+                    }
+                    continue;
+                }
             }
             
-            // Check if hit ground
-            if (proj.y >= 580) {
-                this.brokenWatermelons.push({ x: proj.x, y: 580 });
+            // Check if hit ground (visual impact)
+            if (proj.y >= groundY) {
+                this.brokenWatermelons.push({ x: proj.x, y: groundY });
                 if (this.hippoTarget.messageTimer === 0) {
                     this.hippoTarget.message = 'Not quite, try again!';
                     this.hippoTarget.messageTimer = 150; // Show message for 2.5 seconds
@@ -2079,8 +2127,9 @@ class IceFieldLevel {
         
         // Warning phase
         this.warningPhase = true;
-        this.warningTimer = 90; // 1.5 seconds at 60fps
+        this.warningTimer = 120; // 2.0 seconds at 60fps
         this.warningShakeOffset = 0;
+        this.crackingSoundPlayed = false; // Track if cracking sound has played
         
         // Animation states
         this.crackingBlock = null; // Block that's currently cracking
@@ -2233,6 +2282,12 @@ class IceFieldLevel {
             this.crackingBlock = currentBlock;
             this.crackAnimationFrame = 0;
             this.playerFalling = true;
+            // Play splash sound when stepping on cracked ice
+            if (!isMuted) {
+                const splashSound = splashEffectSound.cloneNode();
+                splashSound.volume = 0.6;
+                splashSound.play().catch(err => console.log("Audio play failed:", err));
+            }
         }
         
         // Check win condition - reached goal column
@@ -2247,6 +2302,14 @@ class IceFieldLevel {
         if (this.warningPhase) {
             this.warningTimer--;
             this.warningShakeOffset = Math.sin(Date.now() * 0.05) * 3;
+            
+            // Play ice cracking sound 1.7 seconds before movement starts (102 frames)
+            if (this.warningTimer === 102 && !this.crackingSoundPlayed && !isMuted) {
+                const crackSound = iceCrackingSound.cloneNode();
+                crackSound.volume = 0.6;
+                crackSound.play().catch(err => console.log("Audio play failed:", err));
+                this.crackingSoundPlayed = true;
+            }
             
             if (this.warningTimer <= 0) {
                 this.warningPhase = false;
@@ -2296,8 +2359,9 @@ class IceFieldLevel {
         
         // Restart warning phase
         this.warningPhase = true;
-        this.warningTimer = 90; // 1.5 seconds at 60fps
+        this.warningTimer = 120; // 2.0 seconds at 60fps
         this.canMove = false;
+        this.crackingSoundPlayed = false; // Reset sound flag for replay
     }
     
     draw() {
@@ -3203,6 +3267,14 @@ class RunicTowerLevel {
         this.dragon.segments[0].col = newCol;
         this.dragon.segments[0].row = newRow;
         
+        // Play snake hiss sound
+        if (!isMuted) {
+            snakeHissSound.currentTime = 0; // Reset sound to start
+            snakeHissSound.play().catch(error => {
+                console.log('Snake hiss sound play failed:', error);
+            });
+        }
+        
         // Check if dragon caught player
         if (newCol === this.playerCol && newRow === this.playerRow) {
             this.restartLevel();
@@ -3320,15 +3392,31 @@ class RunicTowerLevel {
             ctx.fillRect(0, 0, 800, 600);
         }
         
-        // Draw title
+        // Title with semi-transparent background
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        const bgX = 250;
+        const bgY = 10;
+        const bgWidth = 300;
+        const bgHeight = 50;
+        const borderRadius = 24;
+        
+        ctx.beginPath();
+        ctx.moveTo(bgX + borderRadius, bgY);
+        ctx.lineTo(bgX + bgWidth - borderRadius, bgY);
+        ctx.arcTo(bgX + bgWidth, bgY, bgX + bgWidth, bgY + borderRadius, borderRadius);
+        ctx.lineTo(bgX + bgWidth, bgY + bgHeight - borderRadius);
+        ctx.arcTo(bgX + bgWidth, bgY + bgHeight, bgX + bgWidth - borderRadius, bgY + bgHeight, borderRadius);
+        ctx.lineTo(bgX + borderRadius, bgY + bgHeight);
+        ctx.arcTo(bgX, bgY + bgHeight, bgX, bgY + bgHeight - borderRadius, borderRadius);
+        ctx.lineTo(bgX, bgY + borderRadius);
+        ctx.arcTo(bgX, bgY, bgX + borderRadius, bgY, borderRadius);
+        ctx.closePath();
+        ctx.fill();
+        
         ctx.fillStyle = '#ffffff';
         ctx.font = '16px "Press Start 2P"';
         ctx.textAlign = 'center';
         ctx.fillText('The Runic Tower', 400, 40);
-        ctx.font = '8px "Press Start 2P"';
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('Dragon follows 2 tiles behind! Entangle it around 3 columns!', 400, 60);
-        ctx.fillText('Arrows: Move | Space: Drop Egg', 400, 75);
         
         // Draw columns (pillars)
         for (const pillar of this.pillars) {
@@ -3490,7 +3578,7 @@ class RunicTowerLevel {
             ctx.globalAlpha = 1.0;
         }
         
-        // Draw player (sprite + hat)
+        // Draw player (sprite only - no hat or transport on this level)
         const playerX = this.gridStartX + this.playerCol * this.tileSize;
         const playerY = this.gridStartY + this.playerRow * this.tileSize;
         
@@ -3504,17 +3592,7 @@ class RunicTowerLevel {
             spriteImage = penguinImage;
         }
         
-        // Get selected hat image
-        let hatImage;
-        if (gameState.selectedHat === 'hat-normal') {
-            hatImage = hatNormalImage;
-        } else if (gameState.selectedHat === 'hat-viking') {
-            hatImage = hatVikingImage;
-        } else if (gameState.selectedHat === 'hat-plaid') {
-            hatImage = hatPlaidImage;
-        }
-        
-        // Draw sprite
+        // Draw sprite only (no hat or transport)
         if (spriteImage && spriteImage.complete) {
             ctx.drawImage(spriteImage, playerX, playerY, this.tileSize, this.tileSize);
         } else {
@@ -3524,19 +3602,6 @@ class RunicTowerLevel {
             ctx.arc(playerX + this.tileSize / 2, playerY + this.tileSize / 2, 12, 0, Math.PI * 2);
             ctx.fill();
         }
-        
-        // Draw hat on top
-        if (hatImage && hatImage.complete) {
-            ctx.drawImage(hatImage, playerX, playerY, this.tileSize, this.tileSize);
-        }
-        
-        // Stats
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '10px "Press Start 2P"';
-        ctx.textAlign = 'left';
-        ctx.fillText(`Dragon Length: ${this.dragon.segments.length}`, 20, 540);
-        ctx.fillText(`Wrapped Columns: ${this.wrappedPillars.size}/3`, 20, 560);
-        ctx.fillText(`Eggs: ${this.eggs.length}`, 20, 580);
     }
     
     cleanup() {
@@ -3570,8 +3635,8 @@ function startLevel(levelIndex) {
         ["Welcome, brave traveler, to Jollygut Hollow!", "I cannot guide you until I have regained my strength. These lands have drained me. Bring me fuel - sweet, juicy fuel..."],
         ["You have reached the Frozen Forest!", "The journey is quick, but be warned...", "It is covered with treacherous ice patches and falling tree branches, which you must avoid.", "Use Arrow Keys: ← to slow down, → to speed up, ↑ to jump."],
         ["The Frozen Reach is ahead!", "You must cross the icy river. Yet not all ice is sworn to hold. Winter reveals its cracks only once.", "Those who rush will not see it. Step where the ice remembers its strength."],
-        ["You stand at the treshold of Goblin Grotto!", "Dark and frost-bound creatures lurk behind stone enclosures deep within these caves. Only the warmth of true light may undo them.", "Floating ice crystals cling to the cavern walls. Take up my torch, and guide your firelight to shatter the goblins. Good luck!"],
-        ["The final trial: The Runic Tower!", "A dragon serpent guards the exit. It follows your exact path, staying 2 tiles behind.", "Drop eggs to make it grow. Entangle it around three columns to trap it forever."]
+        ["You stand at the threshold of Goblin Grotto!", "Dark and frost-bound creatures lurk behind stone enclosures deep within these caves. Only the warmth of true light may undo them.", "Floating ice crystals cling to the cavern walls. Take up my torch, and guide your firelight to shatter the goblins. Good luck!"],
+        ["The final trial: The Runic Tower!", "A dragon serpent guards the way to the Winter Gate. You must slay it to get through.", "Be warned: It shadows your trail and is deadly if touched.", "Cast eggs with the Spacebar to feed the beast and lengthen its form. When it can coil around three columns, it shall be bound forever — clearing your path to the Winter Gate."]
     ];
     showDialogue(levelIntros[levelIndex], () => {
         gameState.gamePhase = 'playing';
