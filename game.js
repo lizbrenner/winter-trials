@@ -865,19 +865,6 @@ function drawDialogueScreen() {
         }
     }
     ctx.drawImage(backgroundImage, offsetX, offsetY, drawWidth, drawHeight);
-    
-    // Overlay hippo avatar for level 2 dialogue only (not level 3, not during rune displays)
-    if (currentDialogueBackground === 'level2' && 
-        hippoAvatarLoaded && 
-        showRuneDisplay === false) {
-        // Position the hippo avatar in the lower left area
-        const avatarWidth = 200;
-        const avatarHeight = 200;
-        const avatarX = 50;
-        const avatarY = canvas.height - avatarHeight - 100; // 100px from bottom
-        
-        ctx.drawImage(hippoAvatarImage, avatarX, avatarY, avatarWidth, avatarHeight);
-    }
 }
 // Dialogue system
 const dialogueBox = document.getElementById('dialogue-box');
