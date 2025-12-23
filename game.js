@@ -2284,9 +2284,8 @@ class IceFieldLevel {
             this.playerFalling = true;
             // Play splash sound when stepping on cracked ice
             if (!isMuted) {
-                const splashSound = splashEffectSound.cloneNode();
-                splashSound.volume = 0.6;
-                splashSound.play().catch(err => console.log("Audio play failed:", err));
+                splashEffectSound.currentTime = 0;
+                splashEffectSound.play().catch(err => console.log("Audio play failed:", err));
             }
         }
         
@@ -2305,9 +2304,8 @@ class IceFieldLevel {
             
             // Play ice cracking sound 1.7 seconds before movement starts (102 frames)
             if (this.warningTimer === 102 && !this.crackingSoundPlayed && !isMuted) {
-                const crackSound = iceCrackingSound.cloneNode();
-                crackSound.volume = 0.6;
-                crackSound.play().catch(err => console.log("Audio play failed:", err));
+                iceCrackingSound.currentTime = 0;
+                iceCrackingSound.play().catch(err => console.log("Audio play failed:", err));
                 this.crackingSoundPlayed = true;
             }
             
